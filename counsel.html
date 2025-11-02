@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>정시 개인별 상담 (자동 저장)</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>정시 개인별 상담</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #2563eb; --primary-dark:#1d4ed8;
@@ -17,6 +18,7 @@
         body { font-family: 'Pretendard', sans-serif; background: var(--light-bg); padding: 20px; margin: 0; line-height: 1.5; }
         .container { max-width: 95%; margin: 0 auto; }
 
+        /* ... (Header, Student info, Results area, Card CSS는 이전과 동일) ... */
         /* ---------- Header ---------- */
         .header {
             display: flex; justify-content: space-between; align-items: center;
@@ -35,90 +37,238 @@
         .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: none; border-radius: 8px; font-weight: 600; font-size: .9rem; cursor: pointer; transition: .2s; }
         .btn-primary { background: var(--primary-color); color: #fff; }
         .btn-primary:hover { background: var(--primary-dark); }
-        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; } /* 비활성화 스타일 추가 */
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
         .btn-outline { background: #fff; color: var(--text-secondary); border:1px solid var(--border-color); }
         .btn-outline:hover { background: #f8fafc; }
         .btn-sm { padding: 4px 8px; font-size: .8rem; }
-        .btn-danger { background: var(--danger-color); color: #fff; padding: 6px 8px; border-radius: 6px; } /* 카드 헤더 X 버튼 */
+        .btn-danger { background: var(--danger-color); color: #fff; padding: 6px 8px; border-radius: 6px; }
         .btn-danger:hover { background: #dc2626; }
-
-
-        /* ---------- Cards ---------- */
-        .card { background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow); padding: 18px; margin-bottom: 18px; }
+        .btn-success { background: var(--success-color); color: #fff; }
+        .btn-success:hover { background: #059669; }
 
         /* ---------- Student info ---------- */
         #student-info-container { padding: 12px 16px; }
         .student-basic-info { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; font-size: 1.05rem; color: var(--text-primary); }
         .student-basic-info .info-item i { color: var(--text-secondary); margin-right: 5px; }
         .student-basic-info strong { font-weight: 600; }
-        .student-scores-info { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: .9rem; color: var(--text-secondary); padding-top: 8px; border-top: 1px dashed var(--border-color); }
+        .student-scores-info { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 1.2rem; color: var(--text-secondary); padding-top: 8px; border-top: 1px dashed var(--border-color); }
         .score-item { background: #f8fafc; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color); }
         .grade-emphasis { font-weight: 700; color: var(--primary-color); font-size: 1.05em; margin: 0 2px; }
 
-        /* ---------- Compact controls (군/대학/학과) ---------- */
-        .card.controls { padding: 12px; }
-        .compact-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .compact-controls .row { display: flex; align-items: center; gap: 6px; }
-        .compact-controls .row .label { color: var(--text-secondary); font-size: .9rem; white-space: nowrap; }
-        .compact-controls select { min-width: 140px; }
-        #add-wishlist-btn { flex-shrink: 0; /* 버튼 크기 유지 */}
-
-
-        /* ---------- Results area ---------- */
-        .results-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        /* ---------- Results area (상담 목록) ---------- */
+        .results-area { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 20px;
+        }
         .gun-section { background: rgba(0,0,0,0.02); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; }
         .gun-section h2 { margin: 0 0 12px; font-size: 1.15rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .gun-section h2 .gun-count { font-size: .9rem; color: var(--text-secondary); background: #e2e8f0; padding: 3px 8px; border-radius: 10px; }
 
+        /* ... (상담 카드 .result-card 스타일은 기존과 동일) ... */
         .result-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
-        .result-card-header {
-            background: #f8fafc; padding: 8px 12px; border-bottom: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-        }
+        .result-card-header { background: #f8fafc; padding: 8px 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .result-card-header .left { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
         .result-card-header .right { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .result-card-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .result-card-header h3 span { display: block; font-size: .85rem; color: var(--text-secondary); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        /* .remove-card-btn 은 .btn-danger 스타일 사용 */
-
         .result-card-body { padding: 12px; }
         .score-breakdown { margin-bottom: 12px; }
         .score-breakdown table { width: 100%; font-size: .9rem; border-collapse: collapse; }
         .score-breakdown th { text-align: left; padding: 4px 0; color: var(--text-secondary); width: 95px; white-space: nowrap; }
         .score-breakdown td { text-align: right; padding: 4px 0; }
         .score-breakdown .total-score td { font-weight: 700; font-size: 1.05rem; color: var(--primary-color); }
-        .score-breakdown .naeshin-score-row { display: none; } /* 내신 있을때만 보이게 JS 제어 */
-
+        .score-breakdown .naeshin-score-row { display: none; }
         .input-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color); }
         .input-section table { width: 100%; font-size: .9rem; border-collapse: collapse; }
         .input-section th { text-align: left; padding: 5px 0; color: var(--text-secondary); width: 95px; white-space: nowrap; }
         .input-section td { text-align: right; padding: 5px 0; display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
         .input-section input[type="text"], .input-section input[type="number"] { width: 100px; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: .9em; text-align: right; box-sizing: border-box; }
         .practical-score-display { font-size: .85em; color: var(--text-secondary); min-width: 60px; text-align: right; }
-        .practical-score-display span { color: var(--danger-color); font-weight: 500; } /* 감수 */
-        .score-silgi { color: var(--success-color); font-weight: 500; } /* 실기 점수 */
-        .score-silgi span { color: var(--danger-color); font-weight: 500; margin-left: 4px; } /* 총 감수 */
-
+        .practical-score-display span { color: var(--danger-color); font-weight: 500; }
+        .score-silgi { color: var(--success-color); font-weight: 500; }
+        .score-silgi span { color: var(--danger-color); font-weight: 500; margin-left: 4px; }
         .top-10-score-display { font-size: .85rem; color: var(--info-color); font-weight: 600; white-space: nowrap; }
         .top-10-score-display .loading { font-style: italic; color: var(--text-secondary); font-weight: 400; }
-
         .card-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
 
-        /* 배점표 모달 내부 스타일 */
-        .score-table-container {
-            margin-top: 15px; border: 1px solid var(--border-color); border-radius: 8px;
-            overflow: auto; max-height: 50vh;
+
+        /* ---------- Filter Bar ---------- */
+        .filter-bar {
+            background: var(--card-bg); padding: 18px; border-radius: 12px;
+            box-shadow: var(--shadow); margin-bottom: 18px;
         }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px 16px;
+            align-items: end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        .filter-group label { font-size: .9rem; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .filter-group select, .filter-group input { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; font-size: .95rem; }
+        .filter-group .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 5px; }
+        .filter-group .checkbox-group label { font-size: .95rem; color: var(--text-primary); font-weight: 400; display: flex; align-items: center; gap: 4px; }
+        .filter-group .checkbox-group input { width: auto; }
+        .filter-bar-actions { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-bar-actions .gun-filter { display: flex; gap: 8px; }
+        .filter-bar-actions .gun-filter label {
+            padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); background: #fff;
+        }
+        .filter-bar-actions .gun-filter input { display: none; }
+        .filter-bar-actions .gun-filter input:checked + label {
+            background: var(--primary-color); color: #fff; border-color: var(--primary-color);
+        }
+        #filter-count { font-size: .9rem; color: var(--text-secondary); align-self: center; font-weight: 600; }
+
+        
+        /* ⭐️ Custom Multiselect CSS ⭐️ */
+        .custom-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .multiselect-display {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px;
+            background: #fff; font-size: .95rem; cursor: pointer;
+        }
+        .multiselect-display span {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+        .multiselect-display span.placeholder { color: var(--text-secondary); }
+        .multiselect-display .fa-chevron-down {
+            transition: transform 0.2s;
+            color: var(--text-secondary); font-size: 0.8em;
+        }
+        .custom-multiselect.open .fa-chevron-down { transform: rotate(180deg); }
+        
+        .multiselect-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px); left: 0; right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .custom-multiselect.open .multiselect-dropdown { display: block; }
+        .multiselect-dropdown label {
+            display: block;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .multiselect-dropdown label:hover { background: var(--light-bg); }
+        .multiselect-dropdown input[type="checkbox"] { width: auto; }
+
+
+        /* ---------- ⭐️ [수정] Filter Results Table CSS ⭐️ ---------- */
+        .filter-results-card {
+            background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow);
+            margin-bottom: 18px; padding: 0; overflow: hidden;
+        }
+        .filter-results-header { padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
+        .filter-results-header h2 { margin: 0; font-size: 1.2rem; }
+        .filter-results-table-container { max-height: 60vh; overflow-y: auto; }
+        .filter-results-table { width: 100%; border-collapse: collapse; font-size: .85rem; table-layout: fixed; }
+        .filter-results-table thead th {
+            position: sticky; top: 0; background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 12px; text-align: left; font-weight: 600;
+            white-space: nowrap;
+        }
+        .filter-results-table tbody tr:hover { background: #f8fafc; }
+        .filter-results-table td {
+            padding: 10px 12px; border-bottom: 1px solid var(--border-color);
+            vertical-align: middle; line-height: 1.4;
+        }
+        
+        /* ⭐️ [수정] 컬럼 너비 (순서 변경 및 너비 조정) */
+        .filter-results-table th:nth-child(1) { width: 15%; } /* 대학/학과 */
+        .filter-results-table th:nth-child(2) { width: 11%; } /* 군/지역/교직 */
+        .filter-results-table th:nth-child(3) { width: 4%; text-align: right; }  /* 모집인원 */
+        .filter-results-table th:nth-child(4) { width: 4%; text-align: right; } /* 수능% */
+        .filter-results-table th:nth-child(5) { width: 4%; text-align: right; } /* 내신% */
+        .filter-results-table th:nth-child(6) { width: 4%; text-align: right; } /* 실기% */
+        .filter-results-table th:nth-child(7) { width: 18%; } /* 반영과목 */
+        .filter-results-table th:nth-child(8) { width: 13%; } /* 실기종목 */
+        .filter-results-table th:nth-child(9) { width: 4%; text-align: right; }  /* 탐구수 */
+        .filter-results-table th:nth-child(10) { width: 7%; text-align: right; } /* 학생 환산점수 */
+        .filter-results-table th:nth-child(11) { width: 6%; text-align: right; }  /* 지점컷 */
+        .filter-results-table th:nth-child(12) { width: 6%; text-align: right; }  /* MAX컷 */
+        .filter-results-table th:nth-child(13) { width: 7%; } /* 상담목록추가 */
+        
+        .filter-results-table .univ-name { font-weight: 600; color: var(--text-primary); font-size: 1.05em; display: block; }
+        .filter-results-table .dept-name { color: var(--text-secondary); }
+        .filter-results-table .col-info span {
+            display: inline-block; padding: 2px 6px; border-radius: 4px;
+            font-size: 0.9em; margin: 2px 2px 2px 0; border: 1px solid;
+            white-space: nowrap;
+        }
+        .filter-results-table .info-gun-가 { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+        .filter-results-table .info-gun-나 { background: #f0f9ff; border-color: #bae6fd; color: #0369a1; }
+        .filter-results-table .info-gun-다 { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+        .filter-results-table .info-region { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+        .filter-results-table .info-teach-O { background: #fefce8; border-color: #fde047; color: #a16207; }
+        .filter-results-table .info-teach-T { background: #fefce8; border-color: #fde047; color: #a16207; border-style: dashed; }
+
+        .filter-results-table .col-subjects span {
+            display: inline-block; padding: 2px 6px; border-radius: 4px;
+            background: #f8fafc; border: 1px solid #e2e8f0; margin: 2px;
+            white-space: nowrap; font-size: 0.9em;
+        }
+        .filter-results-table .col-subjects span.optional { border-style: dashed; }
+        .filter-results-table .col-subjects span.empty { color: #94a3b8; }
+        
+        .filter-results-table .col-events {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            white-space: normal;
+            word-break: keep-all;
+        }
+
+        /* ⭐️ 점수 & 비율% & 숫자 */
+        .filter-results-table td { text-align: left; }
+        .filter-results-table .col-score,
+        .filter-results-table .col-cut,
+        .filter-results-table .col-percent,
+        .filter-results-table .col-numeric { 
+            text-align: right; 
+            font-size: 0.95em; 
+            padding-left: 6px; /* ⭐️ 왼쪽 여백 축소 */
+            padding-right: 6px; /* ⭐️ 오른쪽 여백 축소 */
+        }
+        .filter-results-table .col-score .score-loading { color: var(--text-secondary); font-size: 0.9em; }
+        .filter-results-table .col-score .score-high { color: var(--primary-color); font-weight: 700; }
+        .filter-results-table .col-score .score-low { color: var(--danger-color); font-weight: 700; }
+        .filter-results-table .col-score .score-none { color: var(--text-primary); font-weight: 700; }
+        .filter-results-table .col-cut { color: var(--text-secondary); }
+        .filter-results-table .col-percent { color: var(--text-secondary); font-weight: 500; }
+
+        .filter-results-table .col-actions { text-align: center; }
+        .filter-results-table .btn-add { font-size: 0.8rem; padding: 5px 8px; }
+        
+        #filter-results-body.empty-msg td { padding: 20px; text-align: center; color: var(--text-secondary); }
+
+
+        /* ... (모달, 토스트팝업 CSS는 기존과 동일) ... */
+        .score-table-container { margin-top: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: auto; max-height: 50vh; }
         .score-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; table-layout: fixed; }
         .score-table th, .score-table td { border: 1px solid var(--border-color); padding: 6px 8px; text-align: center; vertical-align: middle; }
         .score-table thead th { background-color: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 1; }
         .score-table thead tr:first-child th { border-top: none; }
         .score-table td:first-child { font-weight: 600; background-color: #f8fafc; }
-
-        /* ---------- Modal ---------- */
         .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
         .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content.large { max-width: 800px; } /* 배점표용 넓은 모달 */
+        .modal-content.large { max-width: 800px; }
         .modal-close { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
         .modal-close:hover, .modal-close:focus { color: black; text-decoration: none; }
         .modal h2 { margin-top: 0; font-size: 1.3rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;}
@@ -130,19 +280,10 @@
         #cross-gun-modal-body h4 { margin: 15px 0 5px; color: var(--primary-dark); font-size: 1rem; }
         #cross-gun-modal-body p { font-size: 0.9em; color: #555; margin-bottom: 10px;}
         #cross-gun-modal-body ul { margin-bottom: 15px; }
-
-        /* --- ⭐️ Toast Popup (자동 저장 피드백) --- */
-        .toast-popup {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.8); color: white; padding: 10px 18px; border-radius: 20px;
-            font-size: 0.9rem; z-index: 1002; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
-            pointer-events: none; /* 클릭 방지 */
-        }
+        .toast-popup { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(0,0,0,0.8); color: white; padding: 10px 18px; border-radius: 20px; font-size: 0.9rem; z-index: 1002; opacity: 0; transition: opacity 0.3s, bottom 0.3s; pointer-events: none; }
         .toast-popup.show { opacity: 1; bottom: 40px; }
         .toast-popup.success { background-color: var(--success-color); }
         .toast-popup.error { background-color: var(--danger-color); }
-        /* --- ⭐️ Toast Popup 끝 --- */
-
     </style>
 </head>
 <body>
@@ -158,31 +299,109 @@
 
     <div id="student-info-container" class="card" style="display:none; margin-bottom: 14px;">
          <div class="student-basic-info"> <span class="info-item"><i class="fas fa-user-circle"></i> <strong id="selected-student-name">학생 이름</strong></span> <span class="info-item"><i class="fas fa-school"></i> <span id="selected-school-name">학교 정보</span></span> <span class="info-item"><i class="fas fa-venus-mars"></i> <span id="selected-gender">성별</span></span> </div>
-         <div class="student-scores-info"> <span class="score-item" id="score-hist">한국사: -</span> <span class="score-item" id="score-kor">국어(?): -</span> <span class="score-item" id="score-math">수학(?): -</span> <span class="score-item" id="score-eng">영어: -</span> <span class="score-item" id="score-inq1">탐구1(?): -</span> <span class="score-item" id="score-inq2">탐구2(?): -</span> </div>
+         <div class="student-scores-info">  <span class="score-item" id="score-kor">국어(?): -</span> <span class="score-item" id="score-math">수학(?): -</span> <span class="score-item" id="score-eng">영어: -</span> <span class="score-item" id="score-inq1">탐구1(?): -</span> <span class="score-item" id="score-inq2">탐구2(?): -</span> <span class="score-item" id="score-hist">한국사: -</span></div>
     </div>
-
-    <div class="card controls">
-        <div class="compact-controls">
-            <div class="row"> <span class="label">군</span> <select id="gun-select" disabled> <option value="">- 학생 먼저 선택 -</option> </select> </div>
-            <div class="row"> <span class="label">대학교</span> <select id="university-select" disabled> <option value="">- 군 선택 -</option> </select> </div>
-            <div class="row"> <span class="label">학과</span> <select id="department-select" disabled> <option value="">- 대학 선택 -</option> </select> </div>
-            <button type="button" id="add-wishlist-btn" class="btn btn-primary" disabled> <i class="fas fa-plus"></i> 상담 목록에 추가 </button>
-        </div>
-        </div>
 
     <div class="results-area">
         <div class="gun-section" id="ga-gun"> <h2><span class="gun-name">가군</span><span class="gun-count">0 / 3</span></h2> <div class="result-cards-container"></div> </div>
         <div class="gun-section" id="na-gun"> <h2><span class="gun-name">나군</span><span class="gun-count">0 / 3</span></h2> <div class="result-cards-container"></div> </div>
         <div class="gun-section" id="da-gun"> <h2><span class="gun-name">다군</span><span class="gun-count">0 / 3</span></h2> <div class="result-cards-container"></div> </div>
     </div>
+
+    <div class="filter-bar">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label for="filter-region-custom"><i class="fas fa-map-marker-alt"></i> 지역</label>
+                <div class="custom-multiselect" id="filter-region-custom">
+                    <div class="multiselect-display">
+                        <span class="placeholder">- 지역 선택 -</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="multiselect-dropdown">
+                        </div>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label for="filter-teaching"><i class="fas fa-chalkboard-teacher"></i> 교직이수</label>
+                <select id="filter-teaching">
+                    <option value="">전체</option>
+                    <option value="가능">가능 (O, △)</option>
+                    <option value="불가">불가 (X)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-book-dead"></i> 반영 제외 과목</label>
+                <div class="checkbox-group" id="filter-exclude-subject">
+                    <label><input type="checkbox" value="국어"> 국어</label>
+                    <label><input type="checkbox" value="수학"> 수학</label>
+                    <label><input type="checkbox" value="영어"> 영어</label>
+                    <label><input type="checkbox" value="탐구"> 탐구</label>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label for="filter-inquiry-count"><i class="fas fa-list-ol"></i> 탐구 반영 수</label>
+                <select id="filter-inquiry-count">
+                    <option value="">전체</option>
+                    <option value="1">1개</option>
+                    <option value="2">2개</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-exclude-event-custom"><i class="fas fa-running"></i> 실기 제외 종목</label>
+                 <div class="custom-multiselect" id="filter-exclude-event-custom">
+                    <div class="multiselect-display">
+                        <span class="placeholder">- 종목 선택 -</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="multiselect-dropdown">
+                        </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-bar-actions">
+            <div class="gun-filter" id="filter-gun">
+                <input type="radio" name="gun-filter" id="gun-all" value="전체" checked>
+                <label for="gun-all">전체</label>
+                <input type="radio" name="gun-filter" id="gun-ga" value="가">
+                <label for="gun-ga">가군</label>
+                <input type="radio" name="gun-filter" id="gun-na" value="나">
+                <label for="gun-na">나군</label>
+                <input type="radio" name="gun-filter" id="gun-da" value="다">
+                <label for="gun-da">다군</label>
+            </div>
+            <span id="filter-count"></span>
+        </div>
+    </div>
+
+    <div class="filter-results-card" id="filter-results-container" style="display:none;">
+        <div class="filter-results-header">
+            <h2>필터 결과</h2>
+        </div>
+        <div class="filter-results-table-container">
+            <table class="filter-results-table">
+                <thead>
+                    <tr>
+                        <th>대학/학과</th>
+                        <th>군/지역/교직</th>
+                        <th>모집인원</th>
+                        <th>수능%</th> <th>내신%</th> <th>실기%</th> <th>반영 과목 (원본표)</th>
+                        <th>실기종목</th>
+                        <th>탐구수</th>
+                        <th>학생 환산점수</th>
+                        <th>지점컷</th>
+                        <th>MAX컷</th>
+                        <th>상담목록추가</th>
+                    </tr>
+                </thead>
+                <tbody id="filter-results-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<div id="cross-gun-modal" class="modal">
-  <div class="modal-content"> <span class="modal-close" onclick="closeModal('cross-gun-modal')">&times;</span> <h2 id="cross-gun-modal-title">타군 인기 지원 현황</h2> <div id="cross-gun-modal-body"></div> </div>
-</div>
-<div id="score-table-modal" class="modal">
-  <div class="modal-content large"> <span class="modal-close" onclick="closeModal('score-table-modal')">&times;</span> <h2 id="score-table-modal-title">배점표</h2> <div id="score-table-modal-body"></div> </div>
-</div>
+<div id="cross-gun-modal" class="modal"> <div class="modal-content"> <span class="modal-close" onclick="closeModal('cross-gun-modal')">&times;</span> <h2 id="cross-gun-modal-title">타군 인기 지원 현황</h2> <div id="cross-gun-modal-body"></div> </div> </div>
+<div id="score-table-modal" class="modal"> <div class="modal-content large"> <span class="modal-close" onclick="closeModal('score-table-modal')">&times;</span> <h2 id="score-table-modal-title">배점표</h2> <div id="score-table-modal-body"></div> </div> </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -192,31 +411,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearSelect = document.getElementById('year-select');
     const studentSelect = document.getElementById('student-select');
 
-    // --- 컨트롤 요소 ---
-    const gunSelect = document.getElementById('gun-select');
-    const universitySelect = document.getElementById('university-select');
-    const departmentSelect = document.getElementById('department-select');
-    const addWishlistBtn = document.getElementById('add-wishlist-btn');
-    // const messageArea = document.getElementById('message-area'); // 삭제됨
-    // const saveCounselingBtn = document.getElementById('save-counseling-btn'); // 삭제됨
+    // --- ⭐️ [수정] 필터 요소 ---
+    const filterTeaching = document.getElementById('filter-teaching');
+    const filterExcludeSubject = document.getElementById('filter-exclude-subject');
+    const filterInquiryCount = document.getElementById('filter-inquiry-count');
+    const filterGun = document.getElementById('filter-gun');
+    const filterCount = document.getElementById('filter-count');
+    const filterResultsContainer = document.getElementById('filter-results-container');
+    const filterResultsBody = document.getElementById('filter-results-body');
+    // ⭐️ Custom-multiselect 요소
+    const filterRegionCustom = document.getElementById('filter-region-custom');
+    const filterExcludeEventCustom = document.getElementById('filter-exclude-event-custom');
+
 
     // --- 결과/학생정보 ---
     const resultsArea = document.querySelector('.results-area');
     const studentInfoContainer = document.getElementById('student-info-container');
 
-    // --- 모달 요소 ---
+    // --- ⭐️ [수정] 모달 요소 (버그 수정) ---
     const crossGunModal = document.getElementById('cross-gun-modal');
-    const crossGunModalTitle = document.getElementById('cross-gun-modal-title');
-    const crossGunModalBody = document.getElementById('cross-gun-modal-body');
+    const crossGunModalTitle = document.getElementById('cross-gun-modal-title'); // ⭐️ 추가
+    const crossGunModalBody = document.getElementById('cross-gun-modal-body'); // ⭐️ 추가
     const scoreTableModal = document.getElementById('score-table-modal');
     const scoreTableModalTitle = document.getElementById('score-table-modal-title');
     const scoreTableModalBody = document.getElementById('score-table-modal-body');
 
-    let allUniversities = [];
+    // --- 전역 변수 ---
+    let allFilterData = [];
     let allStudents = [];
     let selectedStudentData = null;
     let universityFormulas = {}; // 요강 캐시
-    let studentWishlist = []; // 현재 학생 상담 목록 (DB 로드 결과)
+    let studentWishlist = []; 
 
     const WOMENS_UNIVERSITIES = ['이화여자대학교', '숙명여자대학교', '성신여자대학교', '덕성여자대학교', '동덕여자대학교','서울여자대학교'];
 
@@ -228,297 +453,442 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Helper ---
     const safeParse = (jsonStringOrObject, fallback = null) => { if (typeof jsonStringOrObject === 'object' && jsonStringOrObject !== null) return jsonStringOrObject; if (typeof jsonStringOrObject !== 'string' || !jsonStringOrObject) return fallback; try { return JSON.parse(jsonStringOrObject); } catch { return fallback; } };
-    // ⭐️ Toast Popup 함수 추가
     const showToast = (message, isSuccess = true) => { const el = document.createElement('div'); el.textContent = message; el.className = `toast-popup ${isSuccess ? 'success' : 'error'}`; document.body.appendChild(el); setTimeout(() => el.classList.add('show'), 10); setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 500); }, 2500); };
-    // ⭐️ Debounce 함수 추가 (자동 저장 호출 제어용)
     const debounce = (func, delay) => { let timeoutId; return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => { func.apply(this, args); }, delay); }; };
 
-    // --- 초기 데이터 로드 함수 (변경 없음) ---
-    const loadStudents = async () => { /* 이전과 동일 */ console.log("loadStudents 시작"); const year = yearSelect.value; studentSelect.innerHTML = '<option value="">- 로딩 중... -</option>'; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/students/list-by-branch?year=${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); console.log("loadStudents fetch status:", res.status); if (res.status === 401 || res.status === 403) { handleAuthError(); return; } const data = await res.json(); console.log("loadStudents data:", data); if (data.success && data.students) { allStudents = data.students; allStudents.sort((a,b)=>a.student_name.localeCompare(b.student_name,'ko')); studentSelect.innerHTML = '<option value="">- 학생 선택 -</option>'; allStudents.forEach(s => { studentSelect.innerHTML += `<option value="${s.student_id}">${s.student_name} (${s.school_name || '학교정보없음'})</option>`; }); } else { allStudents = []; studentSelect.innerHTML = '<option value="">- 학생 없음 -</option>'; console.warn("학생 목록 로딩 실패:", data.message); } } catch (e) { console.error('학생 목록 로딩 실패', e); studentSelect.innerHTML = '<option value="">- 로딩 오류 -</option>'; if (e.message === '로그인 만료') handleAuthError(); } finally { console.log("loadStudents 종료"); } };
-    const loadUniversities = async () => { /* 이전과 동일 */ console.log("loadUniversities 시작"); const year = yearSelect.value; universityFormulas = {}; gunSelect.innerHTML = '<option value="">- 군 로딩중 -</option>'; gunSelect.disabled = true; universitySelect.innerHTML = '<option value="">-</option>'; universitySelect.disabled = true; departmentSelect.innerHTML = '<option value="">-</option>'; departmentSelect.disabled = true; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/university-list?year=${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); console.log("loadUniversities fetch status:", res.status); if (res.status === 401 || res.status === 403) { handleAuthError(); return; } const data = await res.json(); console.log("loadUniversities data:", data); if (data.success && data.list) { allUniversities = data.list; const guns = [...new Set(data.list.map(i=>i.gun).filter(Boolean))]; guns.sort((a,b)=>['가','나','다'].indexOf(a)-['가','나','다'].indexOf(b)); gunSelect.innerHTML = '<option value="">- 군 선택 -</option>'; guns.forEach(g => gunSelect.innerHTML += `<option value="${g}">${g}</option>`); gunSelect.disabled = !selectedStudentData; } else { allUniversities = []; gunSelect.innerHTML = '<option value="">- 목록 없음 -</option>'; console.warn("대학 목록 로딩 실패:", data.message); } } catch (e) { console.error('대학 목록 로딩 오류', e); allUniversities = []; gunSelect.innerHTML = '<option value="">- 로딩 오류 -</option>'; if (e.message === '로그인 만료') handleAuthError(); } finally { console.log("loadUniversities 종료"); } };
-    const fetchFormulaDetails = async (U_ID, year) => { /* 이전과 동일 */ console.log(`fetchFormulaDetails 시작: U_ID=${U_ID}, year=${year}`); const k = `${U_ID}-${year}`; if (universityFormulas[k]) { console.log("fetchFormulaDetails 캐시 반환"); return universityFormulas[k]; } if (!U_ID) return null; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/formula-details?U_ID=${U_ID}&year=${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); console.log(`fetchFormulaDetails fetch status (${U_ID}):`, res.status); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); console.log(`fetchFormulaDetails data (${U_ID}):`, data); if (!data.success) throw new Error(data.message || '요강 로딩 실패'); universityFormulas[k] = data.formula; return data.formula; } catch (e) { console.error(`fetchFormulaDetails 실패 (U_ID: ${U_ID}):`, e); if (e.message.includes('인증')) handleAuthError(); return null; } finally { console.log(`fetchFormulaDetails 종료: U_ID=${U_ID}`); } };
-    const calculateSuneung = async (student, U_ID, year) => { /* 이전과 동일 */ console.log(`calculateSuneung 시작: student=${student?.student_id}, U_ID=${U_ID}, year=${year}`); if (!student || !student.scores) { console.warn("calculateSuneung: 학생 또는 성적 정보 없음"); return 0; } try { const studentScoresInput = convertScoresToSuneungFormat(student.scores); const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/calculate`, { method: 'POST', headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${currentToken}` }, body: JSON.stringify({ U_ID, year, studentScores: studentScoresInput }) }); console.log(`calculateSuneung fetch status (${U_ID}):`, res.status); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); if (!res.ok) throw new Error(`HTTP ${res.status}`); const data = await res.json(); console.log(`calculateSuneung data (${U_ID}):`, data); if (!data.success) throw new Error(data.message||'수능 계산 실패'); const score = Number(data.result?.totalScore || 0); console.log(`calculateSuneung 결과 (${U_ID}):`, score); return score; } catch (e) { console.error(`calculateSuneung 에러 (${U_ID}):`, e); if (e.message.includes('인증')) handleAuthError(); return 0; } finally { console.log(`calculateSuneung 종료: U_ID=${U_ID}`); } };
-    const convertScoresToSuneungFormat = (scores) => { /* 이전과 동일 */ if (!scores) return { subjects: [] }; const subjects = []; if (scores.국어_표준점수!=null || scores.국어_백분위!=null) subjects.push({ name:'국어', subject:scores.국어_선택과목, std:scores.국어_표준점수, percentile:scores.국어_백분위, grade:scores.국어_등급 }); if (scores.수학_표준점수!=null || scores.수학_백분위!=null) subjects.push({ name:'수학', subject:scores.수학_선택과목, std:scores.수학_표준점수, percentile:scores.수학_백분위, grade:scores.수학_등급 }); if (scores.영어_등급!=null) subjects.push({ name:'영어', grade:scores.영어_등급 }); if (scores.한국사_등급!=null) subjects.push({ name:'한국사', grade:scores.한국사_등급 }); if (scores.탐구1_선택과목!=null) subjects.push({ name:'탐구', subject:scores.탐구1_선택과목, std:scores.탐구1_표준점수, percentile:scores.탐구1_백분위, grade:scores.탐구1_등급 }); if (scores.탐구2_선택과목!=null) subjects.push({ name:'탐구', subject:scores.탐구2_선택과목, std:scores.탐구2_표준점수, percentile:scores.탐구2_백분위, grade:scores.탐구2_등급 }); return { subjects }; };
-    function updateStudentInfoCard(studentData) { /* 이전과 동일 */ const container = studentInfoContainer; if (!studentData || !container) { if (container) container.style.display='none'; return; } container.querySelector('#selected-student-name').textContent = studentData.student_name || '-'; container.querySelector('#selected-school-name').textContent = studentData.school_name || '정보없음'; container.querySelector('#selected-gender').textContent = studentData.gender || '-'; const sc = studentData.scores || {}; const formatScore = (subject,std,pct,grade)=>{ const parts=[]; if(std!=null) parts.push(`표 ${std}`); if(pct!=null) parts.push(`백 ${pct}`); if(grade!=null) parts.push(`<strong class="grade-emphasis">${grade}</strong>등급`); return parts.length?parts.join(' / '):'-'; }; const formatGradeOnly = (g)=> (g!=null)?`<strong class="grade-emphasis">${g}</strong>등급`:'-'; const el = (id)=>container.querySelector('#'+id); el('score-kor').innerHTML = `국어(${sc.국어_선택과목 || '?' }): ${formatScore(sc.국어_선택과목,sc.국어_표준점수,sc.국어_백분위,sc.국어_등급)}`; el('score-math').innerHTML= `수학(${sc.수학_선택과목 || '?' }): ${formatScore(sc.수학_선택과목,sc.수학_표준점수,sc.수학_백분위,sc.수학_등급)}`; el('score-eng').innerHTML = `영어: ${formatGradeOnly(sc.영어_등급)}`; el('score-hist').innerHTML= `한국사: ${formatGradeOnly(sc.한국사_등급)}`; el('score-inq1').innerHTML= `탐구1(${sc.탐구1_선택과목 || '?' }): ${formatScore(sc.탐구1_선택과목,sc.탐구1_표준점수,sc.탐구1_백분위,sc.탐구1_등급)}`; el('score-inq2').innerHTML= `탐구2(${sc.탐구2_선택과목 || '?' }): ${formatScore(sc.탐구2_선택과목,sc.탐구2_표준점수,sc.탐구2_백분위,sc.탐구2_등급)}`; container.style.display='block'; }
-
-    // --- ⭐️ 자동 저장 함수 ---
-    let isSaving = false; // 저장 중복 방지 플래그
-    const saveCurrentWishlist = debounce(async () => {
-        if (!selectedStudentData || isSaving) return; // 학생 없거나 저장 중이면 중단
-        isSaving = true;
-        console.log("Auto-saving triggered...");
-
-        const studentId = selectedStudentData.student_id;
+    // --- 초기 데이터 로드 ---
+    const loadStudents = async () => { /* 이전과 동일 */ console.log("loadStudents 시작"); const year = yearSelect.value; studentSelect.innerHTML = '<option value="">- 로딩 중... -</option>'; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/students/list-by-branch?year=${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status === 401 || res.status === 403) { handleAuthError(); return; } const data = await res.json(); if (data.success && data.students) { allStudents = data.students; allStudents.sort((a,b)=>a.student_name.localeCompare(b.student_name,'ko')); studentSelect.innerHTML = '<option value="">- 학생 선택 -</option>'; allStudents.forEach(s => { studentSelect.innerHTML += `<option value="${s.student_id}">${s.student_name} (${s.school_name || '학교정보없음'})</option>`; }); } else { allStudents = []; studentSelect.innerHTML = '<option value="">- 학생 없음 -</option>'; } } catch (e) { console.error('학생 목록 로딩 실패', e); studentSelect.innerHTML = '<option value="">- 로딩 오류 -</option>'; if (e.message === '로그인 만료') handleAuthError(); } finally { console.log("loadStudents 종료"); } };
+    
+    // --- ⭐️ [수정] 필터 데이터 로드 함수 (Custom Multiselect 채우기 + 서울/경기 정렬) ---
+    const loadFilterData = async () => {
         const year = yearSelect.value;
-        const wishlistItems = [];
+        console.log(`loadFilterData 시작 (year: ${year})`);
+        allFilterData = [];
+        universityFormulas = {};
+        // ⭐️ Custom Multiselect 초기화
+        const regionDropdown = filterRegionCustom.querySelector('.multiselect-dropdown');
+        const eventDropdown = filterExcludeEventCustom.querySelector('.multiselect-dropdown');
+        regionDropdown.innerHTML = '<label>로딩 중...</label>';
+        eventDropdown.innerHTML = '<label>로딩 중...</label>';
+        updateMultiselectDisplay(filterRegionCustom, '- 지역 선택 -');
+        updateMultiselectDisplay(filterExcludeEventCustom, '- 종목 선택 -');
+        
+        filterResultsContainer.style.display = 'none';
 
-        // DOM에서 현재 모든 카드 데이터 수집
-        document.querySelectorAll('.results-area .result-card').forEach(card=>{
-            const formula = JSON.parse(card.dataset.formula);
-            const gunSection = card.closest('.gun-section'); if (!formula||!gunSection) return;
-            const 모집군 = gunSection.id==='ga-gun'?'가':(gunSection.id==='na-gun'?'나':'다');
-            const 대학학과_ID = formula.U_ID;
-            let 상담_내신점수 = null;
-            const na = card.querySelector('.naeshin-input');
-            if (na && na.value.trim()!=='') 상담_내신점수 = Number(na.value);
-            const 상담_실기기록 = {};
-            card.querySelectorAll('.practical-input').forEach(input=>{
-                if (input.value.trim()!=='') 상담_실기기록[input.dataset.event] = input.value.trim();
-            });
-            const hasSilgiJSON = Object.keys(상담_실기기록).length ? 상담_실기기록 : null;
-            const numFromText = (t)=>{ const m=String(t||'').match(/-?\d+(\.\d+)?/); return m?Number(m[0]):0; };
-            const 상담_수능점수 = numFromText(card.querySelector('.score-suneung')?.textContent);
-            const 상담_실기반영점수 = numFromText(card.querySelector('.score-silgi')?.textContent);
-            const 상담_계산총점 = numFromText(card.querySelector('.score-total')?.textContent);
-
-            wishlistItems.push({ 모집군, 대학학과_ID, 상담_수능점수, 상담_내신점수, 상담_실기기록: hasSilgiJSON, 상담_실기반영점수, 상담_계산총점 });
-        });
-
-        console.log("Saving data:", wishlistItems);
         try {
             const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료');
-            const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/wishlist/bulk-save`, { method:'POST', headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${currentToken}` }, body: JSON.stringify({ 학생_ID: studentId, 학년도: year, wishlistItems }) });
-            console.log("Auto-save API response status:", res.status);
-            if (res.status===401||res.status===403) { handleAuthError(); return; }
+            const res = await fetch(`${SVR_JUNGSI}/jungsi/filter-data/${year}`, { 
+                headers: { 'Authorization': `Bearer ${currentToken}` } 
+            });
+            console.log("loadFilterData fetch status:", res.status);
+            if (res.status === 401 || res.status === 403) { handleAuthError(); return; }
             const data = await res.json();
-            console.log("Auto-save API response data:", data);
-            if (data.success) {
-                 showToast('✅ 자동 저장됨', true);
-             } else {
-                 showToast(`❌ 자동 저장 실패: ${data.message || '알 수 없는 오류'}`, false);
-             }
-        } catch (e) {
-            console.error('자동 저장 오류', e);
-            showToast(`❌ 자동 저장 중 오류 발생: ${e.message}`, false);
-            if (e.message==='로그인 만료') handleAuthError();
-        } finally {
-            isSaving = false; // 플래그 해제
-            console.log("Auto-save process finished");
-        }
-    }, 1500); // 1.5초 디바운스
+            console.log("loadFilterData data:", data);
 
-    // --- 이벤트 핸들러 ---
-    studentSelect.addEventListener('change', async (e)=>{ const id = e.target.value; console.log(`Student selection changed: ${id}`); if (id) { selectedStudentData = allStudents.find(s=>s.student_id==id); updateStudentInfoCard(selectedStudentData); await loadUniversities(); await loadWishlist(); /* saveCounselingBtn.disabled = false; */ gunSelect.disabled = false; } else { selectedStudentData = null; gunSelect.value=''; gunSelect.disabled = true; universitySelect.innerHTML = '<option value="">- 군 선택 -</option>'; universitySelect.disabled = true; departmentSelect.innerHTML = '<option value="">- 대학 선택 -</option>'; departmentSelect.disabled = true; addWishlistBtn.disabled = true; resetResultArea(); updateStudentInfoCard(null); /* saveCounselingBtn.disabled = true; */ } });
-    yearSelect.addEventListener('change', ()=>{ console.log("Year changed"); loadStudents(); loadUniversities(); selectedStudentData=null; studentSelect.value=''; resetResultArea(); updateStudentInfoCard(null); /* saveCounselingBtn.disabled = true; */ });
-    gunSelect.addEventListener('change', ()=>{ const g = gunSelect.value; console.log(`Gun changed: ${g}`); universitySelect.innerHTML = '<option value="">- 대학 선택 -</option>'; departmentSelect.innerHTML = '<option value="">- 학과 선택 -</option>'; departmentSelect.disabled = true; addWishlistBtn.disabled = true; if (g) { const universities = [...new Set(allUniversities.filter(i=>i.gun===g).map(i=>i.university))]; universities.sort((a,b)=>a.localeCompare(b,'ko')); universities.forEach(u=>universitySelect.innerHTML += `<option value="${u}">${u}</option>`); universitySelect.disabled = false; } else universitySelect.disabled = true; });
-    universitySelect.addEventListener('change', ()=>{ const g = gunSelect.value, uni = universitySelect.value; console.log(`University changed: ${uni}`); departmentSelect.innerHTML = '<option value="">- 학과 선택 -</option>'; addWishlistBtn.disabled = true; if (g && uni) { allUniversities.filter(i=>i.gun===g && i.university===uni).sort((a,b)=>a.department.localeCompare(b.department,'ko')).forEach(i=>departmentSelect.innerHTML += `<option value="${i.U_ID}">${i.department}</option>`); departmentSelect.disabled = false; } else departmentSelect.disabled = true; });
-    departmentSelect.addEventListener('change', ()=>{ console.log(`Department changed: ${departmentSelect.value}`); addWishlistBtn.disabled = !departmentSelect.value; });
-    const getGunSectionId = (gunName)=>{ if (gunName==='가군' || gunName==='가') return 'ga-gun'; if (gunName==='나군' || gunName==='나') return 'na-gun'; if (gunName==='다군' || gunName==='다') return 'da-gun'; return ''; };
-    // 결과 카드 생성 (⭐️ 실기 종목 필터링 로직 수정됨)
-    const createResultCard = (container, formula, suneungScore, savedData=null) => {
-        console.log(`createResultCard 호출: U_ID=${formula.U_ID}, suneungScore=${suneungScore}`);
-        const card = document.createElement('div');
-        card.className = 'result-card';
-        card.dataset.uid = formula.U_ID;
-        card.dataset.formula = JSON.stringify(formula); // 포뮬러 데이터 저장
+            if (data.success && data.data) {
+                allFilterData = data.data; // ⭐️ '수능', '내신', '실기' 필드 추가됨
 
-        const reflectsNaeshin = Number(formula.내신||0) > 0;
-        const reflectsSilgi = Number(formula.실기||0) > 0;
+                // 1. 지역 필터 채우기 (⭐️ 서울/경기/인천 우선 정렬)
+                const regions = [...new Set(data.data.map(d => d.지역).filter(Boolean))];
+                const priorityRegions = ['서울', '경기', '인천'];
+                
+                regions.sort((a, b) => {
+                    const aIsPriority = priorityRegions.includes(a);
+                    const bIsPriority = priorityRegions.includes(b);
 
-        // --- ⭐️ 실기 입력칸 HTML 생성 로직 수정 ---
-        let silgiInputsHtml = '';
-        let practicalEventsForStudent = []; // 학생 성별에 맞는 종목만 담을 배열
-
-        // 학생 정보와 실기 배점표가 모두 있을 때만 필터링 시도
-        if (reflectsSilgi && selectedStudentData && selectedStudentData.gender && formula.실기배점 && formula.실기배점.length > 0) {
-            const studentGender = selectedStudentData.gender; // '남' 또는 '여'
-
-            // 1. formula.실기배점 배열에서 현재 학생 성별 데이터만 필터링
-            const genderFilteredScores = formula.실기배점.filter(scoreRow => scoreRow.성별 === studentGender);
-
-            // 2. 필터링된 데이터에서 고유한 종목명 추출 및 정렬
-            practicalEventsForStudent = [...new Set(genderFilteredScores.map(r => r.종목명))].sort();
-
-            console.log(` -> U_ID=${formula.U_ID}, 학생 성별(${studentGender}) 기준 실기 종목 (${practicalEventsForStudent.length}개):`, practicalEventsForStudent);
-
-            // 3. 학생 성별에 맞는 종목이 있을 경우에만 입력칸 HTML 생성
-            if (practicalEventsForStudent.length > 0) {
-                practicalEventsForStudent.forEach(event => {
-                    silgiInputsHtml += `
-                        <tr class="practical-row">
-                            <th>${event}:</th>
-                            <td>
-                                <input type="text" class="practical-input" data-event="${event}" placeholder="기록 입력">
-                                <span class="practical-score-display" data-event-score-display="${event}">-</span>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else {
-                 console.log(` -> U_ID=${formula.U_ID}: 학생 성별(${studentGender})에 맞는 실기 배점표 없음.`);
-                 // 실기 반영은 하지만, 해당 성별 종목이 없을 경우 메시지 표시 (선택 사항)
-                 silgiInputsHtml = `<tr><td colspan="2" style="font-size:0.85em; color:var(--text-secondary); text-align:center;">${studentGender}학생 대상 실기 종목 없음</td></tr>`;
-            }
-        }
-        // --- ⭐️ 실기 입력칸 HTML 생성 로직 수정 끝 ---
-
-        // --- 카드 기본 HTML 구조 (나머지는 이전과 동일) ---
-        let naeshinInputHtml = '';
-        if (reflectsNaeshin) {
-            naeshinInputHtml = `<tr class="naeshin-row"><th>내신 점수:</th><td><input type="number" class="naeshin-input" placeholder="진학사 점수"></td></tr>`;
-        }
-        const naeshinScoreRowClass = reflectsNaeshin ? 'naeshin-score-row' : 'naeshin-score-row hidden-row'; // 클래스명은 유지
-
-        card.innerHTML = `
-            <div class="result-card-header">
-                <div class="left">
-                    <button type="button" class="btn btn-danger btn-sm remove-card-btn" title="삭제"><i class="fas fa-times"></i></button>
-                    <h3>${formula.대학명}<span>${formula.학과명}</span></h3>
-                </div>
-                <div class="right">
-                    <div class="top-10-score-display" data-uid-top10="${formula.U_ID}"><span class="loading">Top10% 로딩...</span></div>
-                </div>
-            </div>
-            <div class="result-card-body">
-                <div class="score-breakdown">
-                    <table>
-                        <tr><th>수능 점수:</th><td class="score-suneung">${suneungScore.toFixed(2)}</td></tr>
-                        <tr class="${naeshinScoreRowClass}"><th>내신 점수:</th><td class="score-naeshin">0.00</td></tr>
-                        <tr><th>실기 점수:</th><td class="score-silgi">0.00 <span>(0감)</span></td></tr>
-                        <tr class="total-score"><th>총점:</th><td class="score-total">${suneungScore.toFixed(2)}</td></tr>
-                    </table>
-                </div>
-                <div class="input-section">
-                    <table>
-                        ${naeshinInputHtml}
-                        ${silgiInputsHtml}
-                    </table>
-                </div>
-                <div class="card-actions"></div>
-            </div>`;
-
-        // --- 카드 액션 버튼 추가 (이전과 동일) ---
-        const actions = card.querySelector('.card-actions');
-        // ⭐️ 실기 배점표 버튼 조건 수정: 학생 성별에 맞는 종목이 '있을 때만' 버튼 표시
-        if (reflectsSilgi && practicalEventsForStudent.length > 0) {
-            const b = document.createElement('button');
-            b.className='btn btn-sm btn-outline';
-            b.innerHTML='<i class="fas fa-table"></i> 실기 배점표';
-            b.onclick=()=>showScoreTableModal('silgi',formula.U_ID,formula.학년도);
-            actions.appendChild(b);
-        }
-        // 내신 배점표 버튼 (기존과 동일)
-        if (reflectsNaeshin && formula.내신배점?.length) {
-            const b = document.createElement('button');
-            b.className='btn btn-sm btn-outline';
-            b.innerHTML='<i class="fas fa-table"></i> 내신 배점표';
-            b.onclick=()=>showScoreTableModal('naeshin',formula.U_ID,formula.학년도);
-            actions.appendChild(b);
-        }
-        // 타군 인기 지원 버튼 (기존과 동일)
-        const bOther = document.createElement('button');
-        bOther.className='btn btn-sm btn-outline';
-        bOther.innerHTML='<i class="fas fa-users"></i> 타군 인기 지원';
-        bOther.onclick=()=>showCrossGunModal(formula.U_ID, formula.학년도, formula.대학명, formula.학과명, formula.군);
-        actions.appendChild(bOther);
-
-        // --- 내신 행 표시 및 저장된 값 로드 (이전과 동일) ---
-        if (reflectsNaeshin) {
-            const row = card.querySelector('.naeshin-score-row');
-            if (row) row.style.display='table-row';
-        }
-        if (savedData) { // 저장된 데이터(DB 로드 결과)가 있으면 값 채우기
-            const naeshinInput = card.querySelector('.naeshin-input');
-            if (naeshinInput && savedData.상담_내신점수!=null) {
-                naeshinInput.value = savedData.상담_내신점수;
-            }
-            const savedRecords = safeParse(savedData.상담_실기기록,{});
-            if (savedRecords && typeof savedRecords ==='object') {
-                card.querySelectorAll('.practical-input').forEach(input => {
-                    const eventName = input.dataset.event;
-                    // 저장된 기록 객체에 해당 종목 키가 있고 값이 null이 아니면 채움
-                    if (Object.prototype.hasOwnProperty.call(savedRecords, eventName) && savedRecords[eventName] != null) {
-                        input.value = savedRecords[eventName];
+                    if (aIsPriority && !bIsPriority) {
+                        return -1; // a가 우선
+                    } else if (!aIsPriority && bIsPriority) {
+                        return 1; // b가 우선
+                    } else if (aIsPriority && bIsPriority) {
+                        // 둘 다 우선순위 지역이면, 서울 > 경기 > 인천 순으로
+                        return priorityRegions.indexOf(a) - priorityRegions.indexOf(b);
+                    } else {
+                        // 둘 다 우선순위가 아니면 가나다순
+                        return a.localeCompare(b, 'ko');
                     }
                 });
+
+                regionDropdown.innerHTML = '';
+                regions.forEach(r => regionDropdown.innerHTML += `<label><input type="checkbox" value="${r}"> ${r}</label>`);
+
+                // 2. 실기 종목 필터 채우기
+                const eventsSet = new Set();
+                data.data.forEach(d => {
+                    if(d.practical_events) {
+                        // ⭐️ 쉼표(,) 뒤에 공백이 있을 수도 없을 수도 있으니 split(,) 하고 trim()
+                        d.practical_events.split(',').forEach(e => {
+                            const trimmedEvent = e.trim();
+                            if (trimmedEvent) eventsSet.add(trimmedEvent);
+                        });
+                    }
+                });
+                const events = [...eventsSet].sort((a,b) => a.localeCompare(b,'ko'));
+                eventDropdown.innerHTML = '';
+                events.forEach(e => eventDropdown.innerHTML += `<label><input type="checkbox" value="${e}"> ${e}</label>`);
+
+                console.log(` -> 필터 데이터 ${allFilterData.length}건 (비율% 포함) 로드 완료`);
+                
+                // ⭐️ Custom Multiselect 이벤트 리스너 초기화 (이 시점에 해야 함)
+                initCustomMultiSelects();
+
+                if(selectedStudentData) {
+                    renderFilteredResults();
+                    filterResultsContainer.style.display = 'block';
+                }
+            } else {
+                allFilterData = [];
+                regionDropdown.innerHTML = '<label>목록 없음</label>';
+                eventDropdown.innerHTML = '<label>목록 없음</label>';
             }
-            recalculateScoresInCard(card); // 저장된 값 로드 후 점수 재계산
+        } catch (e) {
+            console.error('필터 데이터 로딩 오류', e);
+            allFilterData = [];
+            regionDropdown.innerHTML = '<label>로딩 오류</label>';
+            eventDropdown.innerHTML = '<label>로딩 오류</label>';
+            if (e.message === '로그인 만료') handleAuthError();
+        } finally {
+            console.log("loadFilterData 종료");
+        }
+    };
+    
+    // ⭐️ [신규] Custom Multiselect 초기화 함수
+    const initCustomMultiSelects = () => {
+        document.querySelectorAll('.custom-multiselect').forEach(container => {
+            const display = container.querySelector('.multiselect-display');
+            const dropdown = container.querySelector('.multiselect-dropdown');
+            const placeholder = container.querySelector('.placeholder').textContent; // 초기 placeholder 텍스트
+            
+            // 드롭다운 열기/닫기
+            display.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // 다른 모든 드롭다운 닫기
+                document.querySelectorAll('.custom-multiselect.open').forEach(openContainer => {
+                    if (openContainer !== container) {
+                        openContainer.classList.remove('open');
+                    }
+                });
+                // 현재 드롭다운 토글
+                container.classList.toggle('open');
+            });
+
+            // 체크박스 변경 시 이벤트
+            dropdown.addEventListener('change', (e) => {
+                // ⭐️ 드롭다운이 닫히지 않도록 이벤트 전파 중단
+                e.stopPropagation(); 
+                updateMultiselectDisplay(container, placeholder); // 선택된 개수 업데이트
+                renderFilteredResults(); // 필터 재적용
+            });
+            
+            // 드롭다운 내부 클릭 시 닫히지 않게
+            dropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+    };
+
+    // ⭐️ [신규] Custom Multiselect Display 업데이트 함수
+    const updateMultiselectDisplay = (container, placeholder) => {
+        const displaySpan = container.querySelector('.multiselect-display span');
+        const checkedCount = container.querySelectorAll('.multiselect-dropdown input:checked').length;
+
+        if (checkedCount === 0) {
+            displaySpan.textContent = placeholder;
+            displaySpan.classList.add('placeholder');
+        } else {
+            displaySpan.textContent = `${checkedCount}개 선택됨`;
+            displaySpan.classList.remove('placeholder');
+        }
+    };
+
+    // ⭐️ [신규] 바깥 클릭 시 Custom Multiselect 닫기
+    window.addEventListener('click', () => {
+        document.querySelectorAll('.custom-multiselect.open').forEach(container => {
+            container.classList.remove('open');
+        });
+    });
+
+
+    // --- ⭐️ [수정] 필터링된 결과 렌더링 함수 (로직 수정) ---
+    const renderFilteredResults = () => {
+        if (!selectedStudentData) {
+            filterResultsContainer.style.display = 'none';
+            return;
+        }
+        console.log("renderFilteredResults 시작...");
+        filterResultsContainer.style.display = 'block';
+
+        // 1. 현재 필터 값 가져오기 (⭐️ 수정됨)
+        const selectedGun = document.querySelector('input[name="gun-filter"]:checked').value;
+        const selectedRegions = Array.from(filterRegionCustom.querySelectorAll('input:checked')).map(chk => chk.value);
+        const selectedTeaching = filterTeaching.value; // "가능" or "불가"
+        const excludedSubjects = Array.from(filterExcludeSubject.querySelectorAll('input:checked')).map(chk => chk.value);
+        const selectedInquiryCount = filterInquiryCount.value;
+        const excludedEvents = Array.from(filterExcludeEventCustom.querySelectorAll('input:checked')).map(chk => chk.value);
+        const studentGender = selectedStudentData.gender;
+
+        // 2. 필터링 로직 (⭐️ 교직 수정됨)
+        const filteredData = allFilterData.filter(dept => {
+            if (selectedGun !== '전체' && dept.군 !== selectedGun) return false;
+            if (selectedRegions.length > 0 && !selectedRegions.includes(dept.지역)) return false;
+            
+            // ⭐️ 교직 필터 수정 ('가능' = 'O' 또는 '△')
+            if (selectedTeaching === '가능' && (dept.교직 !== 'O' && dept.교직 !== '△')) return false;
+            if (selectedTeaching === '불가' && (dept.교직 === 'O' || dept.교직 === '△')) return false; // (X, null, '' 은 통과)
+
+            if (excludedSubjects.includes('국어') && dept.국어_raw && !dept.국어_raw.startsWith('(')) return false;
+            if (excludedSubjects.includes('수학') && dept.수학_raw && !dept.수학_raw.startsWith('(')) return false;
+            if (excludedSubjects.includes('영어') && dept.영어_raw && !dept.영어_raw.startsWith('(')) return false;
+            if (excludedSubjects.includes('탐구') && dept.탐구_raw && !dept.탐구_raw.startsWith('(')) return false;
+            if (selectedInquiryCount && String(dept.탐구수_raw) !== selectedInquiryCount) return false;
+            
+            if (excludedEvents.length > 0 && dept.practical_events) {
+                // ⭐️ [수정] 쉼표+공백, 쉼표 모두 대응
+                const deptEvents = dept.practical_events.split(',').map(e => e.trim()).filter(Boolean);
+                if (excludedEvents.some(exEv => deptEvents.includes(exEv))) return false;
+            }
+
+            if (studentGender === '남' && WOMENS_UNIVERSITIES.includes(dept.대학명)) return false;
+            return true;
+        });
+
+        console.log(` -> 필터링 결과: ${filteredData.length}건`);
+        filterCount.textContent = `총 ${filteredData.length}개 학과 조회됨`;
+
+        // 3. HTML 렌더링 (⭐️ 비율% 추가 및 순서 변경됨)
+        if (filteredData.length === 0) {
+            filterResultsBody.innerHTML = `<tr class="empty-msg"><td colspan="13">필터 조건에 맞는 대학이 없습니다.</td></tr>`; // ⭐️ colspan 13
+            return;
         }
 
-        // --- 이벤트 리스너 추가 (⭐️ 자동 저장 호출 포함) ---
-        card.querySelectorAll('.naeshin-input, .practical-input').forEach(input => {
-            // 'change' 이벤트 (값이 변경되고 포커스를 잃었을 때) 발생 시 재계산 및 자동 저장
-            input.addEventListener('change', () => recalculateScoresInCard(card));
+        let html = '';
+        filteredData.forEach(dept => {
+            const raw = {
+                kor: dept.국어_raw || '',
+                math: dept.수학_raw || '',
+                eng: dept.영어_raw || '',
+                inq: dept.탐구_raw || '',
+                hist: dept.한국사_raw || ''
+            };
+            const formatSubject = (label, value) => {
+                if (!value) return `<span class="empty">${label} -</span>`;
+                if (value.startsWith('(')) return `<span class="optional">${label} ${value}</span>`;
+                return `<span>${label} ${value}</span>`;
+            };
+            const subjectsHtml = `${formatSubject('국', raw.kor)} ${formatSubject('수', raw.math)} ${formatSubject('영', raw.eng)} ${formatSubject('탐', raw.inq)} ${formatSubject('한', raw.hist)}`;
+            const gunClass = `info-gun-${dept.군}`;
+            const regionText = `${(dept.지역 || '')} ${(dept.시구 || '')}`.trim() || '정보없음';
+            let teachHtml = '';
+            if (dept.교직 === 'O') teachHtml = '<span class="info-teach-O">교직(가능)</span>';
+            else if (dept.교직 === '△') teachHtml = '<span class="info-teach-T">교직(일부)</span>';
+            
+            // ⭐️ 비율 포매팅
+            const formatPercent = (p) => (p === null || p === undefined || p === '') ? '-' : `${parseFloat(p)}`;
+
+            html += `
+                <tr data-uid="${dept.U_ID}">
+                    <td>
+                        <strong class="univ-name">${dept.대학명}</strong>
+                        <span class="dept-name">${dept.학과명}</span>
+                    </td>
+                    <td class="col-info">
+                        <span class="${gunClass}">${dept.군 || '?'}군</span>
+                        <span class="info-region">${regionText}</span>
+                        ${teachHtml}
+                    </td>
+                    <td class="col-numeric">${dept.모집정원 || '-'}</td>
+                    
+                    <td class="col-percent">${formatPercent(dept.수능)}</td>
+                    <td class="col-percent">${formatPercent(dept.내신)}</td>
+                    <td class="col-percent">${formatPercent(dept.실기)}</td>
+                    
+                    <td class="col-subjects">${subjectsHtml}</td>
+                    <td class="col-events">${dept.practical_events ? dept.practical_events.replace(/,/g, ', ') : '-'}</td> 
+                    <td class="col-numeric">${dept.탐구수_raw || '-'}</td>
+                    
+                    <td class="col-score suneung-score-cell" id="suneung-score-${dept.U_ID}">
+                        <span class="score-loading"><i class="fas fa-spinner fa-spin"></i></span>
+                    </td>
+                    <td class="col-cut">${dept.branch_suneung_cut || '-'}</td>
+                    <td class="col-cut">${dept.max_suneung_cut || '-'}</td>
+
+                    <td class="col-actions">
+                        <button type="button" class="btn btn-success btn-sm btn-add" data-uid-add="${dept.U_ID}" title="상담 목록에 추가">
+                            <i class="fas fa-plus"></i> 추가
+                        </button>
+                    </td>
+                </tr>
+            `;
         });
-        card.querySelector('.remove-card-btn').addEventListener('click', () => {
-            const gunSection = card.closest('.gun-section');
-            card.remove(); // 카드 DOM에서 제거
-            if (gunSection) {
-                updateGunCount(gunSection.id); // 군별 카운트 업데이트
-                saveCurrentWishlist(); // 삭제 후 자동 저장
-            }
+        filterResultsBody.innerHTML = html;
+        
+        // 4. '추가' 버튼 리스너
+        filterResultsBody.querySelectorAll('.btn-add').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const U_ID = e.currentTarget.dataset.uidAdd;
+                e.currentTarget.disabled = true;
+                e.currentTarget.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                addUniversityToWishlist(U_ID, e.currentTarget);
+            });
         });
 
-        container.appendChild(card); // 최종적으로 컨테이너에 카드 추가
-        console.log(`createResultCard 종료: 카드 추가됨 (U_ID=${formula.U_ID})`);
-        return card; // 생성된 카드 요소 반환
+        // 5. ⭐️ [신규] 렌더링된 항목들 환산점수 비동기 계산
+        calculateScoresForVisibleRows(filteredData);
     };
-    const recalculateScoresInCard = async (card) => { /* ... 이전 내신 점수 계산 로직 수정된 버전 ... */ if (!card) return; const formula = JSON.parse(card.dataset.formula); const student = selectedStudentData; if (!formula || !student) return; let naeshinScore = 0; const naeshinInput = card.querySelector('.naeshin-input'); if (naeshinInput) { const raw = Number(naeshinInput.value || 0); const ratio = (Number(formula.내신) || 0) / 100; const TOTAL = Number(formula.총점) > 0 ? Number(formula.총점) : 1000; const max = Number(formula.내신만점) || 0; if (ratio > 0 && max > 0 && raw > 0) { naeshinScore = (raw / max) * ratio * TOTAL; } else if (ratio > 0 && raw > 0 && max === 0) { naeshinScore = raw; } } card.querySelector('.score-naeshin').textContent = naeshinScore.toFixed(2); let silgiScore = 0; let totalDeductionText = '<span>(0감)</span>'; const inputs = card.querySelectorAll('.practical-input'); if (inputs.length > 0) { const practicals = []; inputs.forEach(input => { if (input.value.trim() !== '') practicals.push({ event: input.dataset.event, value: input.value }); }); if (practicals.length > 0) { const S_data = { gender: student.gender, practicals }; const F_data = formula; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/silgi/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` }, body: JSON.stringify({ F_data, S_data }) }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); if (data.success && data.result) { silgiScore = Number(data.result.totalScore || 0); const breakdown = data.result.breakdown; if (breakdown?.events) { breakdown.events.forEach(ev => { const span = card.querySelector(`.practical-score-display[data-event-score-display="${ev.event}"]`); if (span) span.innerHTML = ev.score == null ? '-' : `${ev.score.toFixed(2)}점 <span>(${ev.deduction_level}감)</span>`; }); } const d = breakdown?.total_deduction_level || 0; totalDeductionText = d > 0 ? `<span>(${d}감)</span>` : '<span>(0감)</span>'; card.querySelector('.score-silgi').innerHTML = `${silgiScore.toFixed(2)} ${totalDeductionText}`; } else { card.querySelector('.score-silgi').textContent = '계산오류'; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); totalDeductionText = '<span>(오류)</span>'; card.querySelector('.score-silgi').innerHTML = `오류 ${totalDeductionText}`; } } catch (e) { console.error('실기 재계산 오류', e); card.querySelector('.score-silgi').textContent = '통신오류'; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); totalDeductionText = '<span>(오류)</span>'; card.querySelector('.score-silgi').innerHTML = `오류 ${totalDeductionText}`; if (e.message.includes('인증')) handleAuthError(); } } else { card.querySelector('.score-silgi').innerHTML = `0.00 ${totalDeductionText}`; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); } } else { card.querySelector('.score-silgi').innerHTML = `0.00 ${totalDeductionText}`; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); } const suneungScore = Number(card.querySelector('.score-suneung').textContent || 0); const totalScore = suneungScore + naeshinScore + silgiScore; card.querySelector('.score-total').textContent = totalScore.toFixed(2); saveCurrentWishlist(); /* ⭐️ 점수 재계산 후 자동 저장 호출 */ };
-    const updateGunCount = (id)=>{ const c = document.getElementById(id)?.querySelector('.result-cards-container'); const s = document.getElementById(id)?.querySelector('.gun-count'); if (c && s) s.textContent = `${c.querySelectorAll('.result-card').length} / 3`; };
-    const resetResultArea = ()=>{ ['ga-gun','na-gun','da-gun'].forEach(id=>{ const c = document.getElementById(id)?.querySelector('.result-cards-container'); if (c) c.innerHTML=''; updateGunCount(id); }); };
-    const fetchAndDisplayTop10Score = async (cardElement, U_ID, year) => { /* ... 이전과 동일 ... */ const el = cardElement.querySelector(`.top-10-score-display[data-uid-top10="${U_ID}"]`); if (!el) return; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/stats/${U_ID}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status===401||res.status===403) throw new Error('인증 오류'); const data = await res.json(); if (data.success && data.top10Score!=null) { el.innerHTML = `<i class="fas fa-medal"></i> 수능 상위 10%: <strong>${Number(data.top10Score).toFixed(2)}점</strong>`; } else if (data.success) { el.textContent = '수능 상위 10%: 데이터 부족'; } else { el.textContent = '수능 상위 10%: 조회 실패'; } } catch (e) { console.error('상위10% 조회 오류', e); el.textContent = '수능 상위 10%: 조회 오류'; if (e.message.includes('인증')) handleAuthError(); } };
-    function createScoreTableHtml(scores, type) { /* ... 이전 실기 배점표 형식 수정된 버전 ... */ if (!scores || scores.length === 0) { return '<p style="font-size:.8rem;color:#888;padding:5px;">배점표 데이터가 없습니다.</p>'; } if (type === 'silgi') { const events = [...new Set(scores.map(r => r.종목명))].sort(); const uniqueScores = [...new Set(scores.map(r => Number(r.점수)))].sort((a, b) => b - a); const scoreMap = new Map(); scores.forEach(row => { const score = Number(row.점수); const event = row.종목명; const gender = row.성별; const record = row.기록; if (!scoreMap.has(score)) { scoreMap.set(score, new Map()); } const eventMap = scoreMap.get(score); if (!eventMap.has(event)) { eventMap.set(event, { '남': '-', '여': '-' }); } const genderRecord = eventMap.get(event); if (gender === '남' || gender === '남자') genderRecord['남'] = record; if (gender === '여' || gender === '여자') genderRecord['여'] = record; }); let html = '<div class="score-table-container"><table class="score-table"><thead>'; html += '<tr><th rowspan="2">점수</th>'; events.forEach(event => { html += `<th colspan="2">${event}</th>`; }); html += '</tr>'; html += '<tr>'; events.forEach(() => { html += `<th>남</th><th>여</th>`; }); html += '</tr></thead><tbody>'; uniqueScores.forEach(score => { html += `<tr><td>${score}</td>`; const eventMap = scoreMap.get(score) || new Map(); events.forEach(event => { const records = eventMap.get(event) || { '남': '-', '여': '-' }; html += `<td>${records['남']}</td><td>${records['여']}</td>`; }); html += '</tr>'; }); html += '</tbody></table></div>'; return html; } else if (type === 'naeshin') { let tableHtml = `<div class="score-table-container"><table class="score-table"><thead><tr>`; const headers = Object.keys(scores[0]); const desiredOrderNaeshin = ['등급', '점수', '비고']; const headersToShow = headers.filter(h => h !== 'U_ID' && h !== '학년도'); const orderedHeaders = desiredOrderNaeshin.filter(h => headersToShow.includes(h)); headersToShow.forEach(h => { if (!orderedHeaders.includes(h)) orderedHeaders.push(h); }); orderedHeaders.forEach(header => tableHtml += `<th>${header}</th>`); tableHtml += `</tr></thead><tbody>`; scores.sort((a, b) => (Number(a.등급) || 99) - (Number(b.등급) || 99)); scores.forEach(row => { tableHtml += `<tr>`; orderedHeaders.forEach(header => tableHtml += `<td>${row[header] ?? '-'}</td>`); tableHtml += `</tr>`; }); tableHtml += `</tbody></table></div>`; return tableHtml; } else { return '<p style="color:red;">알 수 없는 배점표 타입입니다.</p>'; } }
-    window.showScoreTableModal = async (type, U_ID, year) => { /* 이전과 동일 */ scoreTableModalBody.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> 배점표 로딩 중...</p>'; scoreTableModal.style.display = 'block'; const detail = await fetchFormulaDetails(U_ID, year); if (!detail) { scoreTableModalBody.innerHTML = '<p style="color:red;">요강 정보를 불러오지 못했습니다.</p>'; return; } const scoreData = type === 'silgi' ? detail.실기배점 : detail.내신배점; const uniName = detail.대학명 || ''; const deptName = detail.학과명 || ''; const tableType = type === 'silgi' ? '실기' : '내신'; scoreTableModalTitle.textContent = `${uniName} ${deptName} ${tableType} 배점표 (${year})`; scoreTableModalBody.innerHTML = createScoreTableHtml(scoreData, type); };
-    window.showCrossGunModal = async (U_ID, year, uniName, deptName, baseGun) => { /* 이전과 동일 */ crossGunModalBody.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> 타군 지원 정보 로딩 중...</p>'; crossGunModalTitle.textContent = `${uniName} ${deptName} (${baseGun}) 지원자 타군 인기 Top 3`; crossGunModal.style.display = 'block'; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/cross-gun-stats/${U_ID}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); if (data.success) { let html = `<p>(${data.studentCount || 0}명의 지원자 기준)</p>`; const otherGuns = ['가', '나', '다'].filter(g => g !== baseGun); otherGuns.forEach(gun => { const top3 = data[`${gun}_gun_top3`] || []; html += `<h4>${gun}군 Top ${top3.length}</h4>`; if (top3.length > 0) { html += '<ul>'; top3.forEach((item, index) => { html += `<li><strong>${index + 1}. ${item.university}</strong> - ${item.department} <span class="count">(${item.count}명)</span></li>`; }); html += '</ul>'; } else { html += '<p style="font-size: 0.9em; color: #777;">해당 군 지원 내역이 없습니다.</p>'; } }); crossGunModalBody.innerHTML = html; } else { crossGunModalBody.innerHTML = `<p style="color:red;">정보 조회 실패: ${data.message || '알 수 없는 오류'}</p>`; } } catch (e) { console.error('타군 통계 조회 오류:', e); crossGunModalBody.innerHTML = `<p style="color:red;">정보 조회 중 오류 발생: ${e.message}</p>`; if (e.message.includes('인증')) handleAuthError(); } };
-    window.closeModal = (modalId) => { const modalToClose = document.getElementById(modalId); if (modalToClose) modalToClose.style.display = 'none'; };
-    window.onclick = function(event) { if (event.target == crossGunModal) { closeModal('cross-gun-modal'); } else if (event.target == scoreTableModal) { closeModal('score-table-modal'); } }
-    const loadWishlist = async ()=>{ /* ... 이전과 동일 (showMessage 대신 showToast 사용 고려) ... */ console.log("loadWishlist 시작"); resetResultArea(); if (!selectedStudentData) { console.log("loadWishlist: 학생 미선택, 종료"); return; } const studentId = selectedStudentData.student_id; const year = yearSelect.value; showToast('상담 목록 로딩 중...', true); studentWishlist=[]; universityFormulas={}; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/wishlist/${studentId}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); console.log("loadWishlist fetch status:", res.status); if (res.status===401||res.status===403) { handleAuthError(); return; } const data = await res.json(); console.log("loadWishlist data:", data); if (data.success && data.wishlist) { studentWishlist = data.wishlist; if (studentWishlist.length===0) { showToast('저장된 상담 내역이 없습니다.', true); console.log("loadWishlist: 저장된 내역 없음"); return; } await Promise.all(studentWishlist.map(async item=>{ const gunId = getGunSectionId(item.모집군); const container = document.getElementById(gunId)?.querySelector('.result-cards-container'); if (!container) { console.warn(`Container not found for gunId: ${gunId}`); return; } try { const formula = await fetchFormulaDetails(item.대학학과_ID, year); if (!formula) { console.warn(`Formula not found for U_ID: ${item.대학학과_ID}`); return; } const suneungScore = await calculateSuneung(selectedStudentData, item.대학학과_ID, year); const cardElement = createResultCard(container, formula, suneungScore, item); updateGunCount(gunId); fetchAndDisplayTop10Score(cardElement, item.대학학과_ID, year); } catch (e) { console.error(`카드 생성/처리 중 오류 (U_ID: ${item.대학학과_ID})`, e); } })); showToast(`상담 ${studentWishlist.length}건 로드 완료.`, true); console.log("loadWishlist: 모든 카드 로드 완료"); } else { showToast('상담 목록 로드 실패.', false); console.warn("loadWishlist 실패:", data.message); } } catch (e) { console.error('상담 목록 로딩 오류', e); showToast('상담 목록 로딩 오류 발생', false); if (e.message==='로그인 만료') handleAuthError(); } finally { console.log("loadWishlist 종료"); } };
 
-    // 상담목록에 추가 버튼 리스너 (⭐️ 성공 시 자동 저장 호출)
-    addWishlistBtn.addEventListener('click', async () => {
-        console.log("Add Wishlist button clicked");
-        if (!selectedStudentData) { console.log("학생 미선택"); showToast('학생을 먼저 선택해주세요.', false); return; }
-        const U_ID = departmentSelect.value; const year = yearSelect.value;
-        console.log(`선택된 정보: U_ID=${U_ID}, year=${year}`);
-        if (!U_ID) { console.log("학과 미선택"); showToast('학과를 선택해주세요.', false); return; }
-        const selectedDept = allUniversities.find(u => String(u.U_ID) === String(U_ID));
-        if (!selectedDept) { console.log("학과 정보 못찾음"); showToast('선택된 학과 정보를 찾을 수 없습니다.', false); return; }
-        const gun = selectedDept.gun; const gunSectionId = getGunSectionId(gun);
-        console.log(`학과 정보: ${selectedDept.university} ${selectedDept.department}, 군=${gun}, 섹션ID=${gunSectionId}`);
+    // ⭐️ [신규] 환산점수 계산 및 DOM 업데이트 함수
+    const calculateScoresForVisibleRows = async (visibleData) => {
+        if (!selectedStudentData) return;
+        const year = yearSelect.value;
+        console.log(`calculateScoresForVisibleRows: ${visibleData.length}개 항목 계산 시작...`);
+
+        const scorePromises = visibleData.map(dept => 
+            calculateSuneung(selectedStudentData, dept.U_ID, year)
+                .then(score => ({
+                    uid: dept.U_ID,
+                    score: score,
+                    branchCut: dept.branch_suneung_cut
+                }))
+                .catch(err => ({
+                    uid: dept.U_ID,
+                    score: null,
+                    error: err
+                }))
+        );
+
+        const results = await Promise.all(scorePromises);
+
+        console.log(` -> ${results.length}개 환산점수 계산 완료, DOM 업데이트 시작`);
+        for (const result of results) {
+            const cell = document.getElementById(`suneung-score-${result.uid}`);
+            if (!cell) continue;
+
+            if (result.score === null) {
+                cell.innerHTML = `<span class="score-low">계산오류</span>`;
+                continue;
+            }
+
+            const score = result.score;
+            const cut = parseFloat(result.branchCut);
+            let colorClass = 'score-none'; // 기본 (컷 없음)
+
+            if (!isNaN(cut) && cut > 0) { 
+                colorClass = (score >= cut) ? 'score-high' : 'score-low';
+            }
+
+            cell.innerHTML = `<strong class="${colorClass}">${score.toFixed(2)}</strong>`;
+        }
+        console.log(" -> DOM 업데이트 완료");
+    };
+
+
+    // --- U_ID로 상담 목록에 추가하는 공용 함수 (버그 수정됨) ---
+    const addUniversityToWishlist = async (U_ID, buttonElement = null) => {
+        console.log(`addUniversityToWishlist 호출: U_ID=${U_ID}`);
+        if (!selectedStudentData) { 
+            showToast('학생을 먼저 선택해주세요.', false); 
+            if (buttonElement) { buttonElement.disabled = false; buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가'; }
+            return; 
+        }
+        
+        const year = yearSelect.value;
+        const selectedDept = allFilterData.find(u => String(u.U_ID) === String(U_ID)); 
+        
+        if (!selectedDept) { 
+            showToast('선택된 학과 정보를 찾을 수 없습니다.', false); 
+            if (buttonElement) { buttonElement.disabled = false; buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가'; }
+            return; 
+        }
+
+        const gun = selectedDept.군; // ⭐️ 버그 수정됨
+        const gunSectionId = getGunSectionId(gun);
+        
         const gunSectionElement = document.getElementById(gunSectionId);
-        if (!gunSectionElement) { console.error("군 섹션 요소 없음!"); showToast('HTML 구조 오류(군 섹션 없음)', false); return; }
+        if (!gunSectionElement) { 
+            console.error(`군 섹션 요소 없음! (ID: ${gunSectionId})`); 
+            showToast('HTML 구조 오류(군 섹션 없음)', false); 
+            if (buttonElement) { buttonElement.disabled = false; buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가'; }
+            return; 
+        }
+        
         const container = gunSectionElement.querySelector('.result-cards-container');
         const countSpan = gunSectionElement.querySelector('.gun-count');
+        
         if (!container || !countSpan) { console.error("카드 컨테이너 또는 카운트 스팬 없음!"); showToast('HTML 구조 오류(내부 요소 없음)', false); return; }
+        
         const currentCount = container.querySelectorAll('.result-card').length;
-        console.log(`현재 ${gun} 카드 수: ${currentCount}`);
-        if (currentCount >= 3) { console.log("카드 수 초과"); showToast(`${gun}에는 최대 3개까지 추가 가능합니다.`, false); return; }
-        if (container.querySelector(`.result-card[data-uid="${U_ID}"]`)) { console.log("이미 추가됨"); showToast('이미 추가된 학과입니다.', false); return; }
-
-        addWishlistBtn.disabled = true; addWishlistBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 추가 중...';
-        // showMessage(''); // 삭제됨
+        if (currentCount >= 3) { 
+            showToast(`${gun}에는 최대 3개까지 추가 가능합니다.`, false); 
+            if (buttonElement) { buttonElement.disabled = false; buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가'; }
+            return; 
+        }
+        
+        if (container.querySelector(`.result-card[data-uid="${U_ID}"]`)) { 
+            showToast('이미 추가된 학과입니다.', false); 
+            if (buttonElement) { buttonElement.disabled = false; buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가'; }
+            return; 
+        }
 
         try {
-            console.log("요강 로딩 시도...");
             const formula = await fetchFormulaDetails(U_ID, year);
-            if(!formula){ console.error("요강 로딩 실패"); showToast('요강 정보 로딩 실패', false); throw new Error('Formula load failed'); }
+            if(!formula){ showToast('요강 정보 로딩 실패', false); throw new Error('Formula load failed'); }
+            
             const isWomensUni = WOMENS_UNIVERSITIES.includes(formula.대학명);
-            if (isWomensUni && selectedStudentData.gender === '남') { console.warn("여대 지원 불가"); showToast(`여대(${formula.대학명}) 추가 불가`, false); throw new Error('Gender mismatch'); }
-            console.log("수능 점수 계산 시도...");
+            if (isWomensUni && selectedStudentData.gender === '남') { 
+                showToast(`남학생은 여대(${formula.대학명}) 추가 불가`, false); 
+                throw new Error('Gender mismatch'); 
+            }
+            
             const suneungScore = await calculateSuneung(selectedStudentData, U_ID, year);
-            console.log(`수능 점수 계산 결과: ${suneungScore}`);
-            console.log("카드 생성 시도...");
             const cardElement = createResultCard(container, formula, suneungScore);
-            console.log("카드 생성 완료, 군 카운트 업데이트 시도...");
             updateGunCount(gunSectionId);
-            console.log("상위 10% 점수 로딩 시도...");
             fetchAndDisplayTop10Score(cardElement, U_ID, year);
-            console.log("상담 목록 추가 성공!");
-            saveCurrentWishlist(); // ⭐️ 카드 추가 성공 후 자동 저장 호출
+            saveCurrentWishlist();
+            
         } catch (e) {
             console.error('상담 목록 추가 중 오류:', e);
             showToast(`추가 중 오류 발생: ${e.message || '알 수 없는 오류'}`, false);
         } finally {
-            console.log("추가 버튼 활성화 및 텍스트 복원");
-            addWishlistBtn.disabled = false;
-            addWishlistBtn.innerHTML = '<i class="fas fa-plus"></i> 상담 목록에 추가';
+            if (buttonElement) {
+                 buttonElement.disabled = false;
+                 buttonElement.innerHTML = '<i class="fas fa-plus"></i> 추가';
+            }
         }
-    });
+    };
 
+
+    // --- (이하 함수들은 기존과 동일) ---
+    const fetchFormulaDetails = async (U_ID, year) => { /* 이전과 동일 */ const k = `${U_ID}-${year}`; if (universityFormulas[k]) { return universityFormulas[k]; } if (!U_ID) return null; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/formula-details?U_ID=${U_ID}&year=${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); if (!data.success) throw new Error(data.message || '요강 로딩 실패'); universityFormulas[k] = data.formula; return data.formula; } catch (e) { console.error(`fetchFormulaDetails 실패 (U_ID: ${U_ID}):`, e); if (e.message.includes('인증')) handleAuthError(); return null; } };
+    const calculateSuneung = async (student, U_ID, year) => { /* 이전과 동일 */ if (!student || !student.scores) { return 0; } try { const studentScoresInput = convertScoresToSuneungFormat(student.scores); const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/calculate`, { method: 'POST', headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${currentToken}` }, body: JSON.stringify({ U_ID, year, studentScores: studentScoresInput }) }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); if (!res.ok) throw new Error(`HTTP ${res.status}`); const data = await res.json(); if (!data.success) { console.warn(`calculateSuneung 계산 실패 (U_ID: ${U_ID}):`, data.message); return 0; } const score = Number(data.result?.totalScore || 0); return score; } catch (e) { console.error(`calculateSuneung 에러 (${U_ID}):`, e); if (e.message.includes('인증')) handleAuthError(); return 0; } };
+    const convertScoresToSuneungFormat = (scores) => { /* 이전과 동일 */ if (!scores) return { subjects: [] }; const subjects = []; if (scores.국어_표준점수!=null || scores.국어_백분위!=null) subjects.push({ name:'국어', subject:scores.국어_선택과목, std:scores.국어_표준점수, percentile:scores.국어_백분위, grade:scores.국어_등급 }); if (scores.수학_표준점수!=null || scores.수학_백분위!=null) subjects.push({ name:'수학', subject:scores.수학_선택과목, std:scores.수학_표준점수, percentile:scores.수학_백분위, grade:scores.수학_등급 }); if (scores.영어_등급!=null) subjects.push({ name:'영어', grade:scores.영어_등급 }); if (scores.한국사_등급!=null) subjects.push({ name:'한국사', grade:scores.한국사_등급 }); if (scores.탐구1_선택과목!=null) subjects.push({ name:'탐구', subject:scores.탐구1_선택과목, std:scores.탐구1_표준점수, percentile:scores.탐구1_백분위, grade:scores.탐구1_등급 }); if (scores.탐구2_선택과목!=null) subjects.push({ name:'탐구', subject:scores.탐구2_선택과목, std:scores.탐구2_표준점수, percentile:scores.탐구2_백분위, grade:scores.탐구2_등급 }); return { subjects }; };
+    function updateStudentInfoCard(studentData) { /* 이전과 동일 */ const container = studentInfoContainer; if (!studentData || !container) { if (container) container.style.display='none'; return; } container.querySelector('#selected-student-name').textContent = studentData.student_name || '-'; container.querySelector('#selected-school-name').textContent = studentData.school_name || '정보없음'; container.querySelector('#selected-gender').textContent = studentData.gender || '-'; const sc = studentData.scores || {}; const formatScore = (subject,std,pct,grade)=>{ const parts=[]; if(std!=null) parts.push(`표 ${std}`); if(pct!=null) parts.push(`백 ${pct}`); if(grade!=null) parts.push(`<strong class="grade-emphasis">${grade}</strong>등급`); return parts.length?parts.join(' / '):'-'; }; const formatGradeOnly = (g)=> (g!=null)?`<strong class="grade-emphasis">${g}</strong>등급`:'-'; const el = (id)=>container.querySelector('#'+id); el('score-kor').innerHTML = `국어(${sc.국어_선택과목 || '?' }): ${formatScore(sc.국어_선택과목,sc.국어_표준점수,sc.국어_백분위,sc.국어_등급)}`; el('score-math').innerHTML= `수학(${sc.수학_선택과목 || '?' }): ${formatScore(sc.수학_선택과목,sc.수학_표준점수,sc.수학_백분위,sc.수학_등급)}`; el('score-eng').innerHTML = `영어: ${formatGradeOnly(sc.영어_등급)}`; el('score-hist').innerHTML= `한국사: ${formatGradeOnly(sc.한국사_등급)}`; el('score-inq1').innerHTML= `탐구1(${sc.탐구1_선택과목 || '?' }): ${formatScore(sc.탐구1_선택과목,sc.탐구1_표준점수,sc.탐구1_백분위,sc.탐구1_등급)}`; el('score-inq2').innerHTML= `탐구2(${sc.탐구2_선택과목 || '?' }): ${formatScore(sc.탐구2_선택과목,sc.탐구2_표준점수,sc.탐구2_백분위,sc.탐구2_등급)}`; container.style.display='block'; }
+    let isSaving = false;
+    const saveCurrentWishlist = debounce(async () => { /* 이전과 동일 */ if (!selectedStudentData || isSaving) return; isSaving = true; const studentId = selectedStudentData.student_id; const year = yearSelect.value; const wishlistItems = []; document.querySelectorAll('.results-area .result-card').forEach(card=>{ const formula = JSON.parse(card.dataset.formula); const gunSection = card.closest('.gun-section'); if (!formula||!gunSection) return; const 모집군 = gunSection.id==='ga-gun'?'가':(gunSection.id==='na-gun'?'나':'다'); const 대학학과_ID = formula.U_ID; let 상담_내신점수 = null; const na = card.querySelector('.naeshin-input'); if (na && na.value.trim()!=='') 상담_내신점수 = Number(na.value); const 상담_실기기록 = {}; card.querySelectorAll('.practical-input').forEach(input=>{ if (input.value.trim()!=='') 상담_실기기록[input.dataset.event] = input.value.trim(); }); const hasSilgiJSON = Object.keys(상담_실기기록).length ? 상담_실기기록 : null; const numFromText = (t)=>{ const m=String(t||'').match(/-?\d+(\.\d+)?/); return m?Number(m[0]):0; }; const 상담_수능점수 = numFromText(card.querySelector('.score-suneung')?.textContent); const 상담_실기반영점수 = numFromText(card.querySelector('.score-silgi')?.textContent); const 상담_계산총점 = numFromText(card.querySelector('.score-total')?.textContent); wishlistItems.push({ 모집군, 대학학과_ID, 상담_수능점수, 상담_내신점수, 상담_실기기록: hasSilgiJSON, 상담_실기반영점수, 상담_계산총점 }); }); try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/wishlist/bulk-save`, { method:'POST', headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${currentToken}` }, body: JSON.stringify({ 학생_ID: studentId, 학년도: year, wishlistItems }) }); if (res.status===401||res.status===403) { handleAuthError(); return; } const data = await res.json(); if (data.success) { showToast('✅ 자동 저장됨', true); } else { showToast(`❌ 자동 저장 실패: ${data.message || '알 수 없는 오류'}`, false); } } catch (e) { console.error('자동 저장 오류', e); showToast(`❌ 자동 저장 중 오류 발생: ${e.message}`, false); if (e.message==='로그인 만료') handleAuthError(); } finally { isSaving = false; } }, 1500);
+    studentSelect.addEventListener('change', async (e)=>{ const id = e.target.value; console.log(`Student selection changed: ${id}`); if (id) { selectedStudentData = allStudents.find(s=>s.student_id==id); updateStudentInfoCard(selectedStudentData); await loadWishlist(); renderFilteredResults(); } else { selectedStudentData = null; resetResultArea(); updateStudentInfoCard(null); renderFilteredResults(); } });
+    yearSelect.addEventListener('change', async ()=>{ console.log("Year changed"); selectedStudentData=null; studentSelect.value=''; resetResultArea(); updateStudentInfoCard(null); await loadStudents(); await loadFilterData(); });
+    // ⭐️ [수정] 일반 필터 리스너
+    [filterTeaching, filterInquiryCount, filterGun].forEach(el => { el.addEventListener('change', renderFilteredResults); });
+    filterExcludeSubject.addEventListener('change', renderFilteredResults);
+    // (Custom Multiselect 리스너는 initCustomMultiSelects 함수에서 별도 처리)
+
+    const getGunSectionId = (gunName)=>{ /* 이전과 동일 */ if (gunName==='가군' || gunName==='가') return 'ga-gun'; if (gunName==='나군' || gunName==='나') return 'na-gun'; if (gunName==='다군' || gunName==='다') return 'da-gun'; return ''; };
+    const createResultCard = (container, formula, suneungScore, savedData=null) => { /* 이전과 동일 */ console.log(`createResultCard 호출: U_ID=${formula.U_ID}, suneungScore=${suneungScore}`); const card = document.createElement('div'); card.className = 'result-card'; card.dataset.uid = formula.U_ID; card.dataset.formula = JSON.stringify(formula); const reflectsNaeshin = Number(formula.내신||0) > 0; const reflectsSilgi = Number(formula.실기||0) > 0; let silgiInputsHtml = ''; let practicalEventsForStudent = []; if (reflectsSilgi && selectedStudentData && selectedStudentData.gender && formula.실기배점 && formula.실기배점.length > 0) { const studentGender = selectedStudentData.gender; const genderFilteredScores = formula.실기배점.filter(scoreRow => scoreRow.성별 === studentGender); practicalEventsForStudent = [...new Set(genderFilteredScores.map(r => r.종목명))].sort(); if (practicalEventsForStudent.length > 0) { practicalEventsForStudent.forEach(event => { silgiInputsHtml += `<tr class="practical-row"><th>${event}:</th><td><input type="text" class="practical-input" data-event="${event}" placeholder="기록 입력"><span class="practical-score-display" data-event-score-display="${event}">-</span></td></tr>`; }); } else { silgiInputsHtml = `<tr><td colspan="2" style="font-size:0.85em; color:var(--text-secondary); text-align:center;">${studentGender}학생 대상 실기 종목 없음</td></tr>`; } } let naeshinInputHtml = ''; if (reflectsNaeshin) { naeshinInputHtml = `<tr class="naeshin-row"><th>내신 점수:</th><td><input type="number" class="naeshin-input" placeholder="진학사 점수"></td></tr>`; } const naeshinScoreRowClass = reflectsNaeshin ? 'naeshin-score-row' : 'naeshin-score-row hidden-row'; card.innerHTML = `<div class="result-card-header"><div class="left"><button type="button" class="btn btn-danger btn-sm remove-card-btn" title="삭제"><i class="fas fa-times"></i></button><h3>${formula.대학명}<span>${formula.학과명}</span></h3></div><div class="right"><div class="top-10-score-display" data-uid-top10="${formula.U_ID}"><span class="loading">Top10% 로딩...</span></div></div></div><div class="result-card-body"><div class="score-breakdown"><table><tr><th>수능 점수:</th><td class="score-suneung">${suneungScore.toFixed(2)}</td></tr><tr class="${naeshinScoreRowClass}"><th>내신 점수:</th><td class="score-naeshin">0.00</td></tr><tr><th>실기 점수:</th><td class="score-silgi">0.00 <span>(0감)</span></td></tr><tr class="total-score"><th>총점:</th><td class="score-total">${suneungScore.toFixed(2)}</td></tr></table></div><div class="input-section"><table>${naeshinInputHtml}${silgiInputsHtml}</table></div><div class="card-actions"></div></div>`; const actions = card.querySelector('.card-actions'); if (reflectsSilgi && practicalEventsForStudent.length > 0) { const b = document.createElement('button'); b.className='btn btn-sm btn-outline'; b.innerHTML='<i class="fas fa-table"></i> 실기 배점표'; b.onclick=()=>showScoreTableModal('silgi',formula.U_ID,formula.학년도); actions.appendChild(b); } if (reflectsNaeshin && formula.내신배점?.length) { const b = document.createElement('button'); b.className='btn btn-sm btn-outline'; b.innerHTML='<i class="fas fa-table"></i> 내신 배점표'; b.onclick=()=>showScoreTableModal('naeshin',formula.U_ID,formula.학년도); actions.appendChild(b); } const bOther = document.createElement('button'); bOther.className='btn btn-sm btn-outline'; bOther.innerHTML='<i class="fas fa-users"></i> 타군 인기 지원'; bOther.onclick=()=>showCrossGunModal(formula.U_ID, formula.학년도, formula.대학명, formula.학과명, formula.군); actions.appendChild(bOther); if (reflectsNaeshin) { const row = card.querySelector('.naeshin-score-row'); if (row) row.style.display='table-row'; } if (savedData) { const naeshinInput = card.querySelector('.naeshin-input'); if (naeshinInput && savedData.상담_내신점수!=null) { naeshinInput.value = savedData.상담_내신점수; } const savedRecords = safeParse(savedData.상담_실기기록,{}); if (savedRecords && typeof savedRecords ==='object') { card.querySelectorAll('.practical-input').forEach(input => { const eventName = input.dataset.event; if (Object.prototype.hasOwnProperty.call(savedRecords, eventName) && savedRecords[eventName] != null) { input.value = savedRecords[eventName]; } }); } recalculateScoresInCard(card); } card.querySelectorAll('.naeshin-input, .practical-input').forEach(input => { input.addEventListener('change', () => recalculateScoresInCard(card)); }); card.querySelector('.remove-card-btn').addEventListener('click', () => { const gunSection = card.closest('.gun-section'); card.remove(); if (gunSection) { updateGunCount(gunSection.id); saveCurrentWishlist(); } }); container.appendChild(card); return card; };
+    const recalculateScoresInCard = async (card) => { /* 이전과 동일 */ if (!card) return; const formula = JSON.parse(card.dataset.formula); const student = selectedStudentData; if (!formula || !student) return; let naeshinScore = 0; const naeshinInput = card.querySelector('.naeshin-input'); if (naeshinInput) { const raw = Number(naeshinInput.value || 0); const ratio = (Number(formula.내신) || 0) / 100; const TOTAL = Number(formula.총점) > 0 ? Number(formula.총점) : 1000; const max = Number(formula.내신만점) || 0; if (ratio > 0 && max > 0 && raw > 0) { naeshinScore = (raw / max) * ratio * TOTAL; } else if (ratio > 0 && raw > 0 && max === 0) { naeshinScore = raw; } } card.querySelector('.score-naeshin').textContent = naeshinScore.toFixed(2); let silgiScore = 0; let totalDeductionText = '<span>(0감)</span>'; const inputs = card.querySelectorAll('.practical-input'); if (inputs.length > 0) { const practicals = []; inputs.forEach(input => { if (input.value.trim() !== '') practicals.push({ event: input.dataset.event, value: input.value }); }); if (practicals.length > 0) { const S_data = { gender: student.gender, practicals }; const F_data = formula; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/silgi/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` }, body: JSON.stringify({ F_data, S_data }) }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); if (data.success && data.result) { silgiScore = Number(data.result.totalScore || 0); const breakdown = data.result.breakdown; if (breakdown?.events) { breakdown.events.forEach(ev => { const span = card.querySelector(`.practical-score-display[data-event-score-display="${ev.event}"]`); if (span) span.innerHTML = ev.score == null ? '-' : `${ev.score.toFixed(2)}점 <span>(${ev.deduction_level}감)</span>`; }); } const d = breakdown?.total_deduction_level || 0; totalDeductionText = d > 0 ? `<span>(${d}감)</span>` : '<span>(0감)</span>'; card.querySelector('.score-silgi').innerHTML = `${silgiScore.toFixed(2)} ${totalDeductionText}`; } else { card.querySelector('.score-silgi').innerHTML = `오류 ${totalDeductionText}`; } } catch (e) { console.error('실기 재계산 오류', e); card.querySelector('.score-silgi').innerHTML = `오류 ${totalDeductionText}`; if (e.message.includes('인증')) handleAuthError(); } } else { card.querySelector('.score-silgi').innerHTML = `0.00 ${totalDeductionText}`; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); } } else { card.querySelector('.score-silgi').innerHTML = `0.00 ${totalDeductionText}`; card.querySelectorAll('.practical-score-display').forEach(s => s.innerHTML = '-'); } const suneungScore = Number(card.querySelector('.score-suneung').textContent || 0); const totalScore = suneungScore + naeshinScore + silgiScore; card.querySelector('.score-total').textContent = totalScore.toFixed(2); saveCurrentWishlist(); };
+    const updateGunCount = (id)=>{ /* 이전과 동일 */ const c = document.getElementById(id)?.querySelector('.result-cards-container'); const s = document.getElementById(id)?.querySelector('.gun-count'); if (c && s) s.textContent = `${c.querySelectorAll('.result-card').length} / 3`; };
+    const resetResultArea = ()=>{ /* 이전과 동일 */ ['ga-gun','na-gun','da-gun'].forEach(id=>{ const c = document.getElementById(id)?.querySelector('.result-cards-container'); if (c) c.innerHTML=''; updateGunCount(id); }); };
+    const fetchAndDisplayTop10Score = async (cardElement, U_ID, year) => { /* 이전과 동일 */ const el = cardElement.querySelector(`.top-10-score-display[data-uid-top10="${U_ID}"]`); if (!el) return; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/stats/${U_ID}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status===401||res.status===403) throw new Error('인증 오류'); const data = await res.json(); if (data.success && data.top10Score!=null) { el.innerHTML = `<i class="fas fa-medal"></i> 수능 상위 10%: <strong>${Number(data.top10Score).toFixed(2)}점</strong>`; } else if (data.success) { el.textContent = '수능 상위 10%: 데이터 부족'; } else { el.textContent = '수능 상위 10%: 조회 실패'; } } catch (e) { console.error('상위10% 조회 오류', e); el.textContent = '수능 상위 10%: 조회 오류'; if (e.message.includes('인증')) handleAuthError(); } };
+    function createScoreTableHtml(scores, type) { /* 이전과 동일 */ if (!scores || scores.length === 0) { return '<p style="font-size:.8rem;color:#888;padding:5px;">배점표 데이터가 없습니다.</p>'; } if (type === 'silgi') { const events = [...new Set(scores.map(r => r.종목명))].sort(); const uniqueScores = [...new Set(scores.map(r => Number(r.점수)))].sort((a, b) => b - a); const scoreMap = new Map(); scores.forEach(row => { const score = Number(row.점수); const event = row.종목명; const gender = row.성별; const record = row.기록; if (!scoreMap.has(score)) { scoreMap.set(score, new Map()); } const eventMap = scoreMap.get(score); if (!eventMap.has(event)) { eventMap.set(event, { '남': '-', '여': '-' }); } const genderRecord = eventMap.get(event); if (gender === '남' || gender === '남자') genderRecord['남'] = record; if (gender === '여' || gender === '여자') genderRecord['여'] = record; }); let html = '<div class="score-table-container"><table class="score-table"><thead>'; html += '<tr><th rowspan="2">점수</th>'; events.forEach(event => { html += `<th colspan="2">${event}</th>`; }); html += '</tr>'; html += '<tr>'; events.forEach(() => { html += `<th>남</th><th>여</th>`; }); html += '</tr></thead><tbody>'; uniqueScores.forEach(score => { html += `<tr><td>${score}</td>`; const eventMap = scoreMap.get(score) || new Map(); events.forEach(event => { const records = eventMap.get(event) || { '남': '-', '여': '-' }; html += `<td>${records['남']}</td><td>${records['여']}</td>`; }); html += '</tr>'; }); html += '</tbody></table></div>'; return html; } else if (type === 'naeshin') { let tableHtml = `<div class="score-table-container"><table class="score-table"><thead><tr>`; const headers = Object.keys(scores[0]); const desiredOrderNaeshin = ['등급', '점수', '비고']; const headersToShow = headers.filter(h => h !== 'U_ID' && h !== '학년도'); const orderedHeaders = desiredOrderNaeshin.filter(h => headersToShow.includes(h)); headersToShow.forEach(h => { if (!orderedHeaders.includes(h)) orderedHeaders.push(h); }); orderedHeaders.forEach(header => tableHtml += `<th>${header}</th>`); tableHtml += `</tr></thead><tbody>`; scores.sort((a, b) => (Number(a.등급) || 99) - (Number(b.등급) || 99)); scores.forEach(row => { tableHtml += `<tr>`; orderedHeaders.forEach(header => tableHtml += `<td>${row[header] ?? '-'}</td>`); tableHtml += `</tr>`; }); tableHtml += `</tbody></table></div>`; return tableHtml; } else { return '<p style="color:red;">알 수 없는 배점표 타입입니다.</p>'; } }
+    window.showScoreTableModal = async (type, U_ID, year) => { /* 이전과 동일 */ scoreTableModalBody.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> 배점표 로딩 중...</p>'; scoreTableModal.style.display = 'block'; const detail = await fetchFormulaDetails(U_ID, year); if (!detail) { scoreTableModalBody.innerHTML = '<p style="color:red;">요강 정보를 불러오지 못했습니다.</p>'; return; } const scoreData = type === 'silgi' ? detail.실기배점 : detail.내신배점; const uniName = detail.대학명 || ''; const deptName = detail.학과명 || ''; const tableType = type === 'silgi' ? '실기' : '내신'; scoreTableModalTitle.textContent = `${uniName} ${deptName} ${tableType} 배점표 (${year})`; scoreTableModalBody.innerHTML = createScoreTableHtml(scoreData, type); };
+    window.showCrossGunModal = async (U_ID, year, uniName, deptName, baseGun) => { /* ⭐️ [수정] 모달 변수 버그 수정 */ crossGunModalBody.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> 타군 지원 정보 로딩 중...</p>'; crossGunModalTitle.textContent = `${uniName} ${deptName} (${baseGun}) 지원자 타군 인기 Top 3`; crossGunModal.style.display = 'block'; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/cross-gun-stats/${U_ID}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status === 401 || res.status === 403) throw new Error('인증 오류'); const data = await res.json(); if (data.success) { let html = `<p>(${data.studentCount || 0}명의 지원자 기준)</p>`; const otherGuns = ['가', '나', '다'].filter(g => g !== baseGun); otherGuns.forEach(gun => { const top3 = data[`${gun}_gun_top3`] || []; html += `<h4>${gun}군 Top ${top3.length}</h4>`; if (top3.length > 0) { html += '<ul>'; top3.forEach((item, index) => { html += `<li><strong>${index + 1}. ${item.university}</strong> - ${item.department} <span class="count">(${item.count}명)</span></li>`; }); html += '</ul>'; } else { html += '<p style="font-size: 0.9em; color: #777;">해당 군 지원 내역이 없습니다.</p>'; } }); crossGunModalBody.innerHTML = html; } else { crossGunModalBody.innerHTML = `<p style="color:red;">정보 조회 실패: ${data.message || '알 수 없는 오류'}</p>`; } } catch (e) { console.error('타군 통계 조회 오류:', e); crossGunModalBody.innerHTML = `<p style="color:red;">정보 조회 중 오류 발생: ${e.message}</p>`; if (e.message.includes('인증')) handleAuthError(); } };
+    window.closeModal = (modalId) => { /* 이전과 동일 */ const modalToClose = document.getElementById(modalId); if (modalToClose) modalToClose.style.display = 'none'; };
+    window.onclick = function(event) { /* 이전과 동일 */ if (event.target == crossGunModal) { closeModal('cross-gun-modal'); } else if (event.target == scoreTableModal) { closeModal('score-table-modal'); } }
+    const loadWishlist = async ()=>{ /* 이전과 동일 */ console.log("loadWishlist 시작"); resetResultArea(); if (!selectedStudentData) { return; } const studentId = selectedStudentData.student_id; const year = yearSelect.value; showToast('상담 목록 로딩 중...', true); studentWishlist=[]; try { const currentToken = getToken(); if (!currentToken) throw new Error('로그인 만료'); const res = await fetch(`${SVR_JUNGSI}/jungsi/counseling/wishlist/${studentId}/${year}`, { headers: { 'Authorization': `Bearer ${currentToken}` } }); if (res.status===401||res.status===403) { handleAuthError(); return; } const data = await res.json(); if (data.success && data.wishlist) { studentWishlist = data.wishlist; if (studentWishlist.length===0) { showToast('저장된 상담 내역이 없습니다.', true); return; } await Promise.all(studentWishlist.map(async item=>{ const gunId = getGunSectionId(item.모집군); const container = document.getElementById(gunId)?.querySelector('.result-cards-container'); if (!container) { return; } try { const formula = await fetchFormulaDetails(item.대학학과_ID, year); if (!formula) { return; } const suneungScore = await calculateSuneung(selectedStudentData, item.대학학과_ID, year); const cardElement = createResultCard(container, formula, suneungScore, item); updateGunCount(gunId); fetchAndDisplayTop10Score(cardElement, item.대학학과_ID, year); } catch (e) { console.error(`카드 생성/처리 중 오류 (U_ID: ${item.대학학과_ID})`, e); } })); showToast(`상담 ${studentWishlist.length}건 로드 완료.`, true); } else { showToast('상담 목록 로드 실패.', false); } } catch (e) { console.error('상담 목록 로딩 오류', e); showToast('상담 목록 로딩 오류 발생', false); if (e.message==='로그인 만료') handleAuthError(); } finally { console.log("loadWishlist 종료"); } };
+    
     // --- 페이지 초기 로드 ---
     console.log("Initial load starting...");
     loadStudents();
-    loadUniversities();
+    loadFilterData();
+    // ⭐️ initCustomMultiSelects()는 loadFilterData 내부에서 호출됨
     console.log("Initial load functions called");
 
 });
