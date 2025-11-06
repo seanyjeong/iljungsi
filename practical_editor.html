@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>실기 배점표 관리 (Admin)</title>
+    <link href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .controls {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .controls select, .controls button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        #tables-container { margin-top: 20px; }
+        .table-group {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        .table-group h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        /* ⭐️ 여기 수정: 높이/스크롤 제거해서 내용만큼 쭉 나오게 */
+        .hot {
+            width: 100%;
+        }
+        #save-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+        #save-button:disabled { background-color: #ccc; }
+        #status { margin-left: 10px; font-weight: bold; }
+
+        /* ⭐️ 로그인 모달 CSS ⭐️ */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 998;
+            display: none;
+        }
+        #login-modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 999;
+            width: 320px;
+            display: none;
+        }
+        #login-modal h2 { margin-top: 0; text-align: center; }
+        #login-modal input[type="text"],
+        #login-modal input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #login-modal-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #login-modal-button:hover { background-color: #0056b3; }
+        #login-error-msg {
+            color: red;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay"></div>
+    <div id="login-modal">
+        <h2>관리자 로그인</h2>
+        <p>세션이 만료되었거나 로그인이 필요합니다.</p>
+        <input type="text" id="login-userid" placeholder="아이디 (admin)">
+        <input type="password" id="login-password" placeholder="비밀번호">
+        <button id="login-modal-button">로그인</button>
+        <div id="login-error-msg"></div>
+    </div>
+
+    <h1>실기 배점표 관리 (Admin)</h1>
+
+    <div class="controls">
+        <label>학년도:
+            <select id="year-select">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+            </select>
+        </label>
+        <label>대학/학과:
+            <select id="school-select" style="width: 400px;">
+                <option value="">학년도를 선택하세요</option>
+            </select>
+        </label>
+        <button id="load-button">배점표 불러오기</button>
+        <button id="save-button" style="display:none;">모든 변경사항 저장</button>
+        <span id="status"></span>
+    </div>
+
+    <div id="tables-container"></div>
+
+    <script>
+        // ----------------------------------------
+        // 서버 주소 및 로그인 API 경로
+        // ----------------------------------------
+        const SERVER_URL = 'https://supermax.kr';
+        const LOGIN_API_ENDPOINT = '/26susi/login';
+
+        // ----------------------------------------
+        // 전역 변수
+        // ----------------------------------------
+        let hotInstances = [];
+        let deletedIds = [];
+        let originalDataMap = new Map();
+        let currentU_ID = null;
+        let currentYear = null;
+
+        const yearSelect = document.getElementById('year-select');
+        const schoolSelect = document.getElementById('school-select');
+        const loadButton = document.getElementById('load-button');
+        const saveButton = document.getElementById('save-button');
+        const tablesContainer = document.getElementById('tables-container');
+        const statusSpan = document.getElementById('status');
+
+        const loginOverlay = document.getElementById('login-overlay');
+        const loginModal = document.getElementById('login-modal');
+        const loginButton = document.getElementById('login-modal-button');
+        const loginUserid = document.getElementById('login-userid');
+        const loginPassword = document.getElementById('login-password');
+        const loginErrorMsg = document.getElementById('login-error-msg');
+
+        // ----------------------------------------
+        // 모달 제어 함수
+        // ----------------------------------------
+        function showLoginModal() {
+            loginOverlay.style.display = 'block';
+            loginModal.style.display = 'block';
+            loginUserid.focus();
+            loginErrorMsg.textContent = '';
+        }
+
+        function hideLoginModal() {
+            loginOverlay.style.display = 'none';
+            loginModal.style.display = 'none';
+            loginUserid.value = '';
+            loginPassword.value = '';
+        }
+
+        async function handleLogin() {
+            const userid = loginUserid.value;
+            const password = loginPassword.value;
+            if (!userid || !password) {
+                loginErrorMsg.textContent = '아이디와 비밀번호를 입력하세요.';
+                return;
+            }
+
+            loginErrorMsg.textContent = '로그인 중...';
+            loginButton.disabled = true;
+
+            try {
+                const response = await fetch(`${SERVER_URL}${LOGIN_API_ENDPOINT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userid, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success && result.token) {
+                    localStorage.setItem('jwt_token', result.token);
+                    hideLoginModal();
+                    setStatus('로그인 성공! 데이터를 다시 불러옵니다.', false);
+                    loadSchools();
+                } else {
+                    loginErrorMsg.textContent = result.message || '아이디 또는 비밀번호가 틀립니다.';
+                }
+            } catch (err) {
+                console.error("로그인 fetch 실패:", err);
+                loginErrorMsg.textContent = '로그인 요청 실패. (CORS 에러일 수 있음)';
+            } finally {
+                loginButton.disabled = false;
+            }
+        }
+
+        // ----------------------------------------
+        // 유틸리티 함수
+        // ----------------------------------------
+        function getToken() {
+            return localStorage.getItem('jwt_token');
+        }
+
+        async function apiFetch(url, options = {}) {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const fullUrl = `${SERVER_URL}${url}`;
+            const response = await fetch(fullUrl, { ...options, headers });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                console.error(`API Error ${response.status}: ${errorData.message}`);
+
+                if (response.status === 401 || response.status === 403) {
+                    showLoginModal();
+                    throw new Error('인증이 필요합니다.');
+                }
+                throw new Error(errorData.message || 'API 요청 실패');
+            }
+            return response.json();
+        }
+
+        function groupBy(data, keys) {
+            return data.reduce((acc, item) => {
+                const groupKey = keys.map(key => item[key]).join('||');
+                if (!acc[groupKey]) { acc[groupKey] = []; }
+                acc[groupKey].push(item);
+                return acc;
+            }, {});
+        }
+
+        function setStatus(message, isError = false) {
+            statusSpan.textContent = message;
+            statusSpan.style.color = isError ? 'red' : 'green';
+        }
+
+        // ----------------------------------------
+        // 학교 목록 로드
+        // ----------------------------------------
+        async function loadSchools() {
+            const year = yearSelect.value;
+            if (!year) {
+                schoolSelect.innerHTML = '<option value="">학년도를 선택하세요</option>';
+                return;
+            }
+            setStatus('학교 목록 로딩 중...', false);
+            try {
+                const url = `/jungsi/admin/practical-table/schools?year=${year}`;
+                const result = await apiFetch(url);
+                if (result.success && result.schools) {
+                    schoolSelect.innerHTML = '<option value="">-- 학교/학과 선택 --</option>';
+                    result.schools.forEach(school => {
+                        const option = document.createElement('option');
+                        option.value = school.U_ID;
+                        option.textContent = `[${school.U_ID}] ${school.대학명} - ${school.학과명}`;
+                        schoolSelect.appendChild(option);
+                    });
+                    setStatus('학교 목록 로드 완료.', false);
+                }
+            } catch (err) {
+                if (err.message !== '인증이 필요합니다.') {
+                    setStatus(`학교 목록 로드 실패: ${err.message}`, true);
+                }
+            }
+        }
+
+        // ----------------------------------------
+        // 배점표 데이터 로드
+        // ----------------------------------------
+        async function loadTableData() {
+            currentU_ID = schoolSelect.value;
+            currentYear = yearSelect.value;
+            if (!currentU_ID || !currentYear) { return; }
+
+            setStatus('배점표 데이터 로딩 중...', false);
+            tablesContainer.innerHTML = '';
+            hotInstances = [];
+            deletedIds = [];
+            originalDataMap.clear();
+
+            try {
+                const url = `/jungsi/admin/practical-table/data?year=${currentYear}&U_ID=${currentU_ID}`;
+                const result = await apiFetch(url);
+
+                if (!result.success || !result.data) {
+                    throw new Error('데이터 로드 실패');
+                }
+
+                const groupedData = groupBy(result.data, ['종목명', '성별']);
+
+                if (Object.keys(groupedData).length === 0) {
+                    setStatus('데이터 없음 (추가 가능)', false);
+                } else {
+                    setStatus(`총 ${result.data.length}개 행 로드.`, false);
+                }
+
+                for (const groupKey in groupedData) {
+                    const [eventName, gender] = groupKey.split('||');
+                    const groupData = groupedData[groupKey];
+
+                    const originalGroupData = groupData.map(d => ({
+                        id: d.id,
+                        종목명: d.종목명,
+                        성별: d.성별,
+                        기록: d.기록,
+                        배점: d.배점
+                    }));
+                    originalDataMap.set(groupKey, originalGroupData);
+
+                    createHotTable(eventName, gender, groupData);
+                }
+
+                const addGroupButton = document.createElement('button');
+                addGroupButton.textContent = '➕ 새 종목/성별 그룹 추가';
+                addGroupButton.onclick = () => {
+                    alert('새 그룹 추가 기능은 나중에 구현 예정입니다.');
+                };
+                tablesContainer.appendChild(addGroupButton);
+
+                saveButton.style.display = 'inline-block';
+            } catch (err) {
+                if (err.message !== '인증이 필요합니다.') {
+                    setStatus(`데이터 로드 실패: ${err.message}`, true);
+                }
+                saveButton.style.display = 'none';
+            }
+        }
+
+        // ----------------------------------------
+        // Handsontable 생성 (그룹별)
+        // ----------------------------------------
+        function createHotTable(eventName, gender, groupData) {
+            const groupKey = `${eventName}||${gender}`;
+
+            const groupContainer = document.createElement('div');
+            groupContainer.className = 'table-group';
+            groupContainer.dataset.groupKey = groupKey;
+
+            const title = document.createElement('h3');
+            title.textContent = `${eventName} (${gender})`;
+            groupContainer.appendChild(title);
+
+            const hotContainer = document.createElement('div');
+            hotContainer.className = 'hot';
+            groupContainer.appendChild(hotContainer);
+
+            tablesContainer.appendChild(groupContainer);
+
+            const hot = new Handsontable(hotContainer, {
+                data: groupData,
+                columns: [
+                    { data: 'id', title: 'ID', readOnly: true, width: 60, type: 'numeric' },
+                    { data: '종목명', title: '종목명', width: 150, type: 'text' },
+                    { data: '성별',   title: '성별',   width: 60,  type: 'text' },
+                    { data: '기록',   title: '기록',   width: 100, type: 'text' },
+                    { data: '배점',   title: '배점',   width: 100, type: 'text' }
+                ],
+                colHeaders: true,
+                rowHeaders: true,
+                minSpareRows: 1,
+
+                // ⭐️ 여기 추가: 높이 자동으로, 내부 스크롤 없이 전체 펼침
+                height: 'auto',
+                width: '100%',
+
+                // Enter / Tab 네비게이션
+                enterMoves: { row: 1, col: 0 }, // Enter: 아래 셀
+                tabMoves:   { row: 0, col: 1 }, // Tab: 오른쪽 셀
+                autoWrapRow: false,
+                autoWrapCol: false,
+
+                contextMenu: {
+                    items: {
+                        "remove_row": { name: '선택한 행 삭제' }
+                    }
+                },
+                licenseKey: 'non-commercial-and-evaluation',
+
+                beforeRemoveRow: (index, amount, physicalRows) => {
+                    for (let i = 0; i < amount; i++) {
+                        const rowData = hot.getSourceDataAtRow(physicalRows[i]);
+                        if (rowData && rowData.id) {
+                            deletedIds.push(rowData.id);
+                        }
+                    }
+                },
+
+                // ⭐️ 편집 중일 때도 화살표로 다음 셀 이동 (편집 내용 커밋 후 이동)
+                afterDocumentKeyDown: function(event) {
+                    const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+                    if (!arrowKeys.includes(event.key)) return;
+
+                    const editor = this.getActiveEditor();
+
+                    if (editor && editor.isOpened()) {
+                        const sel = this.getSelectedLast();
+                        if (!sel) return;
+
+                        let [rowStart, colStart, rowEnd, colEnd] = sel;
+                        let row = rowEnd;
+                        let col = colEnd;
+
+                        if (event.key === 'ArrowUp') {
+                            row = Math.max(row - 1, 0);
+                        } else if (event.key === 'ArrowDown') {
+                            row = Math.min(row + 1, this.countRows() - 1);
+                        } else if (event.key === 'ArrowLeft') {
+                            col = Math.max(col - 1, 0);
+                        } else if (event.key === 'ArrowRight') {
+                            col = Math.min(col + 1, this.countCols() - 1);
+                        }
+
+                        editor.finishEditing(false, () => {
+                            this.selectCell(row, col);
+                        });
+
+                        event.preventDefault();
+                    }
+                }
+            });
+
+            hot.groupKey = groupKey;
+            hotInstances.push(hot);
+        }
+
+        // ----------------------------------------
+        // 저장
+        // ----------------------------------------
+        async function saveAllChanges() {
+            if (!currentU_ID || !currentYear) { return; }
+
+            setStatus('변경사항 수집 중...', false);
+            saveButton.disabled = true;
+
+            const payload = {
+                U_ID: currentU_ID,
+                year: currentYear,
+                updates: [],
+                additions: [],
+                deletions: [...deletedIds]
+            };
+
+            try {
+                for (const hot of hotInstances) {
+                    const groupKey = hot.groupKey;
+                    if (!groupKey) continue;
+
+                    const [defaultEvent, defaultGender] = groupKey.split('||');
+                    const currentData = hot.getSourceData();
+                    const originalData = originalDataMap.get(groupKey) || [];
+                    const originalIds = new Set(originalData.map(d => d.id));
+
+                    for (const item of currentData) {
+                        if (!item.기록 && !item.배점 && !item.종목명 && !item.성별) {
+                            continue;
+                        }
+
+                        if (!item.id) {
+                            payload.additions.push({
+                                종목명: item.종목명 || defaultEvent,
+                                성별: item.성별 || defaultGender,
+                                기록: item.기록,
+                                배점: item.배점
+                            });
+                        } else if (originalIds.has(item.id)) {
+                            const originalItem = originalData.find(d => d.id === item.id);
+                            if (
+                                originalItem.기록 !== item.기록 ||
+                                originalItem.배점 !== item.배점 ||
+                                originalItem.종목명 !== item.종목명 ||
+                                originalItem.성별 !== item.성별
+                            ) {
+                                payload.updates.push({
+                                    id: item.id,
+                                    기록: item.기록,
+                                    배점: item.배점,
+                                    종목명: item.종목명,
+                                    성별: item.성별
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (
+                    payload.updates.length === 0 &&
+                    payload.additions.length === 0 &&
+                    payload.deletions.length === 0
+                ) {
+                    setStatus('변경된 내용이 없습니다.', false);
+                    saveButton.disabled = false;
+                    return;
+                }
+
+                setStatus('서버에 저장 중...', false);
+                const result = await apiFetch(
+                    '/jungsi/admin/practical-table/bulk-update',
+                    { method: 'POST', body: JSON.stringify(payload) }
+                );
+
+                if (result.success) {
+                    setStatus(`저장 완료! (총 ${result.totalAffected}건 처리). 다시 불러옵니다...`, false);
+                    setTimeout(loadTableData, 1000);
+                }
+            } catch (err) {
+                if (err.message !== '인증이 필요합니다.') {
+                    setStatus(`저장 실패: ${err.message}`, true);
+                }
+            } finally {
+                saveButton.disabled = false;
+            }
+        }
+
+        // ----------------------------------------
+        // 이벤트 리스너 연결
+        // ----------------------------------------
+        yearSelect.addEventListener('change', loadSchools);
+        loadButton.addEventListener('click', loadTableData);
+        saveButton.addEventListener('click', saveAllChanges);
+
+        // 학교 선택 시 자동으로 배점표 로드
+        schoolSelect.addEventListener('change', () => {
+            if (schoolSelect.value) {
+                loadTableData();
+            }
+        });
+
+        // 모달 로그인 버튼 및 Enter 키
+        loginButton.addEventListener('click', handleLogin);
+        loginPassword.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        // ----------------------------------------
+        // 초기 실행 (토큰 검사)
+        // ----------------------------------------
+        if (!getToken()) {
+            showLoginModal();
+        } else {
+            loadSchools();
+        }
+    </script>
+
+</body>
+</html>
