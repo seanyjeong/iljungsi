@@ -104,22 +104,32 @@ async function fetchSchools(){
       headers: {'Authorization': `Bearer ${getToken()}`}
     });
     const data = await res.json();
-    if (!data.success) {
-      showMsg(false, data.message || '학교 목록을 불러오지 못했습니다.');
+
+    // 🔥 여기서 방어코드: schools 없으면 list 쓰기
+    const rows =
+      Array.isArray(data.schools) ? data.schools :
+      Array.isArray(data.list)    ? data.list    :
+      [];
+
+    if (!rows.length) {
+      showMsg(false, '학교 목록을 불러오지 못했습니다. (0건)');
+      schoolEl.innerHTML = `<option value="">데이터 없음</option>`;
       return;
     }
-    // 필요한 필드만 추림
-    schoolData = data.schools.map(r => ({
+
+    // 필요한 필드만 추림 (API마다 키가 다를 수 있으니까 fallback)
+    schoolData = rows.map(r => ({
       U_ID: r.U_ID,
-      대학명: r.대학명,
-      학과명: r.학과명
+      대학명: r.대학명 || r.university || r.univ_name || r.univ || '',
+      학과명: r.학과명 || r.department || r.major || r.dept_name || ''
     }));
 
     // 대학명 기준 그룹
     schoolsByUniversity = new Map();
     for (const row of schoolData) {
-      if (!schoolsByUniversity.has(row.대학명)) schoolsByUniversity.set(row.대학명, []);
-      schoolsByUniversity.get(row.대학명).push(row);
+      const uniName = row.대학명 || '(대학명 없음)';
+      if (!schoolsByUniversity.has(uniName)) schoolsByUniversity.set(uniName, []);
+      schoolsByUniversity.get(uniName).push(row);
     }
 
     // 대학명 셀렉트 채우기
@@ -154,7 +164,7 @@ async function loadConvPreview(){
       headers: {'Authorization': `Bearer ${getToken()}`}
     });
     const data = await res.json();
-    if (!data.success){ showMsg(false, data.message || '미리보기 로드 실패'); return; }
+    if (!data.success){ showMsg(false, data.message || '미리보기 로드 실패'); prevEl.value=''; return; }
 
     let out = '';
     for (const kind of ['사탐','과탐']){
@@ -178,7 +188,6 @@ async function saveData(){
   const U_ID = deptEl.value;
   if (!U_ID){ showMsg(false, '학과를 선택하세요.'); return; }
 
-  // 입력 3열(백분위/사탐/과탐) → 서버 포맷(사탐 pct score / 과탐 pct score)으로 변환
   const raw = bulkEl.value.trim();
   if (!raw){ showMsg(false, '붙여넣을 데이터가 비었습니다.'); return; }
 
@@ -211,9 +220,7 @@ async function saveData(){
     showMsg(ok, data.message || (ok?'저장 성공':'저장 실패'));
 
     if (ok){
-      // ✅ 저장 성공 시 입력 textarea 비우기
       bulkEl.value = '';
-      // 미리보기 갱신
       await loadConvPreview();
     }
   }catch(e){
@@ -222,14 +229,12 @@ async function saveData(){
   }
 }
 
-/* 이벤트 바인딩 */
 document.getElementById('btn-load-list').addEventListener('click', fetchSchools);
 schoolEl.addEventListener('change', onUniversityChange);
 yearEl.addEventListener('change', fetchSchools);
 document.getElementById('btn-load').addEventListener('click', loadConvPreview);
 document.getElementById('btn-save').addEventListener('click', saveData);
 
-/* 초기 로드 */
 if (!getToken()) {
   alert('로그인이 필요합니다. /setting 에서 로그인해주세요.');
 }
