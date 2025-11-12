@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>정시 개인별 상담 (3.7v)</title>
+    <title>정시 개인별 상담 (드롭다운 실기배점표 + 지점/맥스 총점컷)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -11,7 +11,7 @@
             --light-bg: #f8fafc; --card-bg: #ffffff;
             --border-color: #e2e8f0; --text-primary:#1e293b; --text-secondary:#475569;
             --danger-color: #ef4444; --success-color: #10b981; --warning-color: #f59e0b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             --info-color: #3b82f6;
         }
         * { box-sizing: border-box; }
@@ -139,7 +139,6 @@
         .filter-group .checkbox-group label { font-size: .95rem; color: var(--text-primary); font-weight: 400; display: flex; align-items: center; gap: 4px; }
         .filter-group .checkbox-group input { width: auto; }
         .filter-bar-actions { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
-        /* [NEW] left-actions wrapper */
         .filter-bar-actions .left-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .filter-bar-actions .gun-filter { display: flex; gap: 8px; }
         .filter-bar-actions .gun-filter label {
@@ -221,13 +220,14 @@
         .filter-results-table th:nth-child(4) { width: 4%; text-align: right; }
         .filter-results-table th:nth-child(5) { width: 4%; text-align: right; }
         .filter-results-table th:nth-child(6) { width: 4%; text-align: right; }
-        .filter-results-table th:nth-child(7) { width: 18%; }
-        .filter-results-table th:nth-child(8) { width: 13%; }
-        .filter-results-table th:nth-child(9) { width: 4%; text-align: right; }
-        .filter-results-table th:nth-child(10) { width: 7%; text-align: right; }
-        .filter-results-table th:nth-child(11) { width: 6%; text-align: right; }
+        .filter-results-table th:nth-child(7) { width: 4%; text-align: right; } /* ⭐️ 기타% */
+        .filter-results-table th:nth-child(8) { width: 17%; } /* 반영 과목 */
+        .filter-results-table th:nth-child(9) { width: 12%; } /* 실기종목 */
+        .filter-results-table th:nth-child(10) { width: 4%; text-align: right; }
+        .filter-results-table th:nth-child(11) { width: 7%; text-align: right; }
         .filter-results-table th:nth-child(12) { width: 6%; text-align: right; }
-        .filter-results-table th:nth-child(13) { width: 7%; }
+        .filter-results-table th:nth-child(13) { width: 6%; text-align: right; }
+        .filter-results-table th:nth-child(14) { width: 7%; }
 
         .filter-results-table .univ-name { font-weight: 600; color: var(--text-primary); font-size: 1.05em; display: block; }
         .filter-results-table .dept-name { color: var(--text-secondary); }
@@ -262,7 +262,7 @@
         .filter-results-table .col-cut,
         .filter-results-table .col-percent,
         .filter-results-table .col-numeric {
-            text-align: right;
+            text-align: center;
             font-size: 0.95em;
             padding-left: 6px;
             padding-right: 6px;
@@ -278,7 +278,7 @@
 
         /* ---------- [NEW] Empty State ---------- */
         .empty-state {
-            display: block; /* Will be toggled */
+            display: block;
             text-align: center;
             padding: 40px;
             font-size: 1.1rem;
@@ -286,12 +286,12 @@
             background: var(--card-bg);
             border-radius: 12px;
             box-shadow: var(--shadow);
-            grid-column: 1 / -1; /* Make it span the grid */
+            grid-column: 1 / -1;
         }
         .empty-state i {
             font-size: 2rem;
             margin-bottom: 10px;
-            color: #cbd5e1; /* Lighter color */
+            color: #cbd5e1;
         }
 
         /* ---------- Modal ---------- */
@@ -467,9 +467,18 @@
                     <input type="radio" name="gun-filter" id="gun-da" value="다">
                     <label for="gun-da">다군</label>
                 </div>
+
                 <button type="button" id="filter-reset-btn" class="btn btn-outline btn-sm">
                     <i class="fas fa-sync-alt"></i> 필터 초기화
                 </button>
+
+                <!-- ✅ 통합 검색 입력 추가 -->
+                <input
+                  type="search"
+                  id="filter-search"
+                  placeholder="학교/학과/지역 검색"
+                  style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;min-width:220px"
+                />
             </div>
             <span id="filter-count"></span>
         </div>
@@ -489,6 +498,7 @@
                     <th>수능%</th>
                     <th>내신%</th>
                     <th>실기%</th>
+                    <th>기타%</th>
                     <th>반영 과목 (원본표)</th>
                     <th>실기종목</th>
                     <th>탐구수</th>
@@ -537,7 +547,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterResultsBody = document.getElementById('filter-results-body');
     const filterRegionCustom = document.getElementById('filter-region-custom');
     const filterExcludeEventCustom = document.getElementById('filter-exclude-event-custom');
-    const filterResetBtn = document.getElementById('filter-reset-btn'); // [NEW] Reset button
+    const filterResetBtn = document.getElementById('filter-reset-btn');
+
+    /* ✅ 검색 입력 참조 추가 */
+    const filterSearch = document.getElementById('filter-search');
 
     const scoreTableModal = document.getElementById('score-table-modal');
     const scoreTableModalTitle = document.getElementById('score-table-modal-title');
@@ -546,45 +559,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const crossGunModal = document.getElementById('cross-gun-modal');
     const crossGunModalBody = document.getElementById('cross-gun-modal-body');
     const crossGunModalTitle = document.getElementById('cross-gun-modal-title');
+    // ✅ 호이스팅되는 함수 선언문 버전 (어디서 먼저 써도 안전)
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
     
-    // [MODIFIED] 군(전체/가/나/다) 라디오 눌렀을 때 다시 렌더
+    // 군 라디오 변경 시 렌더
     filterGun.addEventListener('change', () => {
         renderFilteredResults();
     });
     
-    // [NEW] Add live filtering for other filters
+    // 라이브 필터링
     filterTeaching.addEventListener('change', renderFilteredResults);
     filterExcludeSubject.addEventListener('change', renderFilteredResults);
     filterInquiryCount.addEventListener('change', renderFilteredResults);
 
-    // [NEW] Filter Reset Function
+    // ✅ 검색 인풋 디바운스 필터링
+    filterSearch.addEventListener('input', debounce(renderFilteredResults, 200));
+
+    // 필터 초기화
     function resetFilters() {
-        // 1. Reset simple selects
         filterTeaching.value = "";
         filterInquiryCount.value = "";
-        
-        // 2. Reset radio buttons
         filterGun.querySelector('input[value="전체"]').checked = true;
-        
-        // 3. Reset checkbox groups
         filterExcludeSubject.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
-        
-        // 4. Reset custom multiselects
+
         const regionDropdown = filterRegionCustom.querySelector('.multiselect-dropdown');
         regionDropdown.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
         updateMultiselectDisplay(filterRegionCustom, '- 지역 선택 -');
-        
+
         const eventDropdown = filterExcludeEventCustom.querySelector('.multiselect-dropdown');
         eventDropdown.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
         updateMultiselectDisplay(filterExcludeEventCustom, '- 종목 선택 -');
-        
-        // 5. Re-render
+
+        /* ✅ 검색어도 초기화 */
+        if (filterSearch) filterSearch.value = '';
+
         renderFilteredResults();
     };
-    
-    // [NEW] Add listener for reset button
     filterResetBtn.addEventListener('click', resetFilters);
-
 
     const studentInfoContainer = document.getElementById('student-info-container');
 
@@ -600,23 +618,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getToken = () => localStorage.getItem('jwt_token');
     
-    // [MODIFIED] Hoisting fix: Use function declaration
     function handleAuthError() {
         alert('인증 만료. 다시 로그인하세요.');
         window.top.location.href = LOGIN_PAGE;
     };
 
-    const debounce = (func, delay) => {
-        let timeoutId;
-        return (...args) => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func.apply(this, args);
-            }, delay);
-        };
-    };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
+
+
     function showToast(message, isSuccess = true) {
         const el = document.createElement('div');
         el.textContent = message;
@@ -629,16 +638,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2500);
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function safeParse(v, fb = null) {
         if (typeof v === 'object' && v !== null) return v;
         if (typeof v !== 'string' || !v) return fb;
         try { return JSON.parse(v); } catch { return fb; }
     };
 
-    // [MOVED UP & MODIFIED] saveCurrentWishlist is now defined earlier
+    // 자동 저장
     let isSaving = false;
-    const saveCurrentWishlist = debounce(async function(){ // Use 'function' or arrow func, it's ok here
+    const saveCurrentWishlist = debounce(async function(){
         if (!selectedStudentData || isSaving) return;
         isSaving = true;
         const studentId = selectedStudentData.student_id;
@@ -695,7 +703,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        1. 학생 목록 로드
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function loadStudents() {
         const year = yearSelect.value;
         studentSelect.innerHTML = '<option value="">- 로딩 중... -</option>';
@@ -728,7 +735,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        2. 필터 데이터 로드
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function loadFilterData() {
         const year = yearSelect.value;
         allFilterData = [];
@@ -801,7 +807,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function initCustomMultiselects() {
         document.querySelectorAll('.custom-multiselect').forEach(container => {
             const display = container.querySelector('.multiselect-display');
@@ -819,7 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dropdown.addEventListener('change', (e)=>{
                 e.stopPropagation();
                 updateMultiselectDisplay(container, placeholder);
-                renderFilteredResults(); // [MODIFIED] Already triggers live filtering
+                renderFilteredResults();
             });
 
             dropdown.addEventListener('click', (e)=> e.stopPropagation());
@@ -830,7 +835,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.custom-multiselect.open').forEach(c=>c.classList.remove('open'));
     });
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function updateMultiselectDisplay(container, placeholder) {
         const span = container.querySelector('.multiselect-display span');
         const checked = container.querySelectorAll('.multiselect-dropdown input:checked').length;
@@ -846,7 +850,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        3. 필터 결과 렌더링
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     function renderFilteredResults() {
         if (!selectedStudentData) {
             filterResultsContainer.style.display='none';
@@ -860,6 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedInquiryCount = filterInquiryCount.value;
         const excludedEvents = Array.from(filterExcludeEventCustom.querySelectorAll('input:checked')).map(i=>i.value);
         const studentGender = selectedStudentData.gender;
+
+        /* ✅ 검색어 추출 */
+        const q = (filterSearch?.value || '').trim().toLowerCase();
 
         const filtered = allFilterData.filter(dept=>{
             if (selectedGun!=='전체' && dept.군!==selectedGun) return false;
@@ -876,6 +882,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (excludedEvents.some(ev=>deptEv.includes(ev))) return false;
             }
             if (studentGender==='남' && WOMENS_UNIVERSITIES.includes(dept.대학명)) return false;
+
+            /* ✅ 통합 검색: 대학명, 학과명, 지역/시구/군, 과목표, 실기종목 */
+            if (q) {
+                const hay = [
+                    dept.대학명, dept.학과명, dept.지역, dept.시구, dept.군,
+                    dept.국어_raw, dept.수학_raw, dept.영어_raw, dept.탐구_raw, dept.한국사_raw,
+                    dept.practical_events
+                ].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(q)) return false;
+            }
+
             return true;
         });
 
@@ -927,6 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="col-percent">${formatPercent(dept.수능)}</td>
                 <td class="col-percent">${formatPercent(dept.내신)}</td>
                 <td class="col-percent">${formatPercent(dept.실기)}</td>
+                <td class="col-percent">${formatPercent(dept.기타)}</td>
                 <td class="col-subjects">${subjectsHtml}</td>
                 <td class="col-events">${dept.practical_events ? dept.practical_events.replace(/,/g, ', ') : '-'}</td>
                 <td class="col-numeric">${dept.탐구수_raw || '-'}</td>
@@ -959,7 +977,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        4. 환산점수 계산
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function calculateScoresForVisibleRows(rows) {
         if (!selectedStudentData) return;
         const year = yearSelect.value;
@@ -987,7 +1004,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        5. 상담목록 추가
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function addUniversityToWishlist(U_ID, btnEl=null) {
         if (!selectedStudentData) {
             showToast('학생을 먼저 선택하세요', false);
@@ -1027,7 +1043,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const suneungScore = await calculateSuneung(selectedStudentData, U_ID, year);
             const card = createResultCard(container, formula, suneungScore);
             updateGunCount(gunSectionId);
-            // 여기서 우리가 바꾼 버전 호출
             fetchAndDisplayDeptStats(card, U_ID, year);
             saveCurrentWishlist();
         } catch (e) {
@@ -1041,7 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function fetchFormulaDetails(U_ID, year) {
         const k = `${U_ID}-${year}`;
         if (universityFormulas[k]) return universityFormulas[k];
@@ -1062,7 +1076,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function calculateSuneung(student, U_ID, year) {
         if (!student || !student.scores) return 0;
         try {
@@ -1087,7 +1100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function convertScoresToSuneungFormat(s) {
         if (!s) return { subjects: [] };
         const subjects = [];
@@ -1102,7 +1114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { subjects };
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function createResultCard(container, formula, suneungScore, savedData=null) {
         const card = document.createElement('div');
         card.className='result-card';
@@ -1224,7 +1235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function recalcCard(card) {
         const formula = JSON.parse(card.dataset.formula);
         const student = selectedStudentData;
@@ -1291,7 +1301,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveCurrentWishlist();
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function updateGunCount(id) {
         const sec = document.getElementById(id);
         if (!sec) return;
@@ -1300,7 +1309,6 @@ document.addEventListener('DOMContentLoaded', () => {
         span.textContent = `${c.querySelectorAll('.result-card').length} / 3`;
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function getGunSectionId(gun) {
         if (gun==='가군'||gun==='가') return 'ga-gun';
         if (gun==='나군'||gun==='나') return 'na-gun';
@@ -1308,7 +1316,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function resetResultArea() {
         ['ga-gun','na-gun','da-gun'].forEach(id=>{
             const c = document.getElementById(id)?.querySelector('.result-cards-container');
@@ -1318,23 +1325,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /* =========================
-       ★ 여기: 카드 위쪽 컷 표시 (API 안 때림)
+       ★ 카드 위쪽 컷 표시
     ========================== */
-   // ★ 카드 위쪽 상위10% + 지점/MAX 총점컷 표시
-   // [MODIFIED] Hoisting fix: Use function declaration
     async function fetchAndDisplayDeptStats(card, U_ID, year) {
         const box = card.querySelector(`.top-metrics[data-uid-metrics="${U_ID}"]`);
         if (!box) return;
 
-        // 1) 먼저 /jungsi/filter-data/:year 에서 이미 받아온 값으로 컷 보여주기
         const dept = allFilterData.find(d => String(d.U_ID) === String(U_ID));
 
-        // 기본값 세팅
         let branchTotalView = '-';
         let maxTotalView = '-';
 
         if (dept) {
-            // 프론트 테이블에서 쓰던 컬럼명 그대로 재사용
             if (dept.branch_total_cut != null && dept.branch_total_cut !== '') {
                 branchTotalView = Number(dept.branch_total_cut).toFixed(2);
             }
@@ -1343,14 +1345,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 일단 컷 먼저 찍어둔다 (API 늦어도 이것부터 보여야 하니까)
         box.querySelector('.metric.branch').innerHTML =
             `<i class="fas fa-building-user"></i> 지점 총점컷: <strong>${branchTotalView}</strong>`;
         box.querySelector('.metric.max').innerHTML =
             `<i class="fas fa-crown"></i> MAX 총점컷: <strong>${maxTotalView}</strong>`;
 
-        // 2) 이제 진짜 카드용 API 호출 (이미 서버에 있는 거)
-        //    👉 /jungsi/counseling/stats/:U_ID/:year
         try {
             const token = localStorage.getItem('jwt_token');
             if (!token) throw new Error('로그인 만료');
@@ -1363,17 +1362,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.status === 401 || res.status === 403) {
                 box.querySelector('.metric.top10').innerHTML =
-                    `<i class="fas fa-medal"></i> 상위10%: -`;
+                    `<i class="fas fa-medal"></i> 상위수능10%: -`;
                 return;
             }
 
             const data = await res.json();
-
-            // 서버가 어떤 모양으로 주는지 모르니까 최대한 흡수
-            // 예) { success:true, data:{...} }  /  { success:true, stats:{...} }  /  { success:true, top10Score:... }
             const payload = data.data || data.stats || data;
 
-            // 상위10% 후보 키 전부 다 열어둠
             const top10 =
                 payload.top10Score ??
                 payload.top10 ??
@@ -1381,7 +1376,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 payload.top10_total ??
                 null;
 
-            // 혹시 여기서 총점컷도 다시 내려주면 이걸로 덮어쓰기
             const branchFromApi =
                 payload.branch_total_cut ??
                 payload.branchTotal ??
@@ -1394,7 +1388,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 payload.max_total ??
                 null;
 
-            // 상위10% 표시
             if (top10 != null) {
                 box.querySelector('.metric.top10').innerHTML =
                     `<i class="fas fa-medal"></i> 상위수능10%: <strong>${Number(top10).toFixed(2)}</strong>`;
@@ -1403,21 +1396,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     `<i class="fas fa-medal"></i> 상위수능10%: -`;
             }
 
-            // 서버가 카드용 총점컷도 같이 줬다면 그걸로 덮어쓰기
             if (branchFromApi != null) {
                 box.querySelector('.metric.branch').innerHTML =
                     `<i class="fas fa-building-user"></i> 지점 총점컷: <strong>${Number(branchFromApi).toFixed(2)}</strong>`;
             }
             if (maxFromApi != null) {
                 box.querySelector('.metric.max').innerHTML =
-                    `<i class="fas fa-crown"></i> MAX 총점컷: <strong>${maxFromApi.toFixed(2)}</strong>`;
+                    `<i class="fas fa-crown"></i> MAX 총점컷: <strong>${Number(maxFromApi).toFixed(2)}</strong>`;
             }
 
         } catch (err) {
             console.error('카드 통계 불러오기 오류:', err);
             box.querySelector('.metric.top10').innerHTML =
-                `<i class="fas fa-medal"></i> 상위10%: -`;
-            // 컷은 위에서 한 번 찍어놨으니까 여기서는 안 건드림
+                `<i class="fas fa-medal"></i> 상위수능10%: -`;
         }
     };
 
@@ -1485,7 +1476,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function renderSilgiEventTable(eventName) {
         const wrap = document.getElementById('silgi-event-table-wrap');
         if (!wrap || !currentSilgiEventMap) return;
@@ -1580,7 +1570,6 @@ document.addEventListener('DOMContentLoaded', () => {
         wrap.innerHTML = html;
     };
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function createNaeshinScoreTableHtml(scores) {
         if (!scores || !scores.length) {
             return '<p style="font-size:.85rem;">내신 배점표가 없습니다.</p>';
@@ -1647,7 +1636,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================
        9. 저장된 상담목록 불러오기
     ========================== */
-    // [MODIFIED] Hoisting fix: Use function declaration
     async function loadWishlist() {
         resetResultArea();
         if (!selectedStudentData) return;
@@ -1675,7 +1663,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const suneungScore = await calculateSuneung(selectedStudentData, item.대학학과_ID, year);
                 const card = createResultCard(container, formula, suneungScore, item);
                 updateGunCount(gunId);
-                // 여기서도 같은 함수로 컷 표시
                 fetchAndDisplayDeptStats(card, item.대학학과_ID, year);
             }
             showToast('상담 목록 불러옴');
@@ -1692,7 +1679,6 @@ document.addEventListener('DOMContentLoaded', () => {
     studentSelect.addEventListener('change', async (e)=>{
         const id = e.target.value;
         
-        // --- [MODIFIED] Handle empty state ---
         const emptyState = document.getElementById('empty-state-message');
         const gunSections = document.querySelectorAll('.gun-section');
         
@@ -1700,17 +1686,14 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedStudentData = null;
             resetResultArea();
             updateStudentInfoCard(null);
-            renderFilteredResults(); // This will hide the results table
-            
+            renderFilteredResults();
             emptyState.style.display = 'block';
             gunSections.forEach(sec => sec.style.display = 'none');
             return;
         }
         
-        // Student is selected
         emptyState.style.display = 'none';
         gunSections.forEach(sec => sec.style.display = 'block');
-        // --- [END MODIFICATION] ---
         
         selectedStudentData = allStudents.find(s=>s.student_id==id);
         updateStudentInfoCard(selectedStudentData);
@@ -1724,7 +1707,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resetResultArea();
         updateStudentInfoCard(null);
 
-        // [NEW] Also hide gun sections and show empty state on year change
         document.getElementById('empty-state-message').style.display = 'block';
         document.querySelectorAll('.gun-section').forEach(sec => sec.style.display = 'none');
         
@@ -1732,7 +1714,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await loadFilterData();
     });
 
-    // [MODIFIED] Hoisting fix: Use function declaration
     function updateStudentInfoCard(std) {
         if (!std) {
             studentInfoContainer.style.display='none';
