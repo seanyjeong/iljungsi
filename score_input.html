@@ -435,9 +435,45 @@
       }
     }
 
+    // ⭐️ 날짜 체크: 12/4 이전이면 입력 불가
+    function checkInputLockDate() {
+      const now = new Date();
+      const unlockDate = new Date('2024-12-04T00:00:00'); // 12월 4일
+
+      if (now < unlockDate) {
+        // 입력 잠금
+        const allInputs = document.querySelectorAll('input, select, button');
+        allInputs.forEach(el => {
+          if (el.id !== 'year-select') { // 학년도 선택은 허용
+            el.disabled = true;
+          }
+        });
+
+        // 경고 메시지 표시
+        const header = document.querySelector('.header');
+        if (header) {
+          const warning = document.createElement('div');
+          warning.style.cssText = 'width: 100%; background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; padding: 12px 16px; border-radius: 8px; font-weight: 600; text-align: center; margin-top: 10px;';
+          warning.innerHTML = '<i class="fas fa-lock"></i> 2024년 12월 4일부터 입력이 가능합니다.';
+          header.parentElement.insertBefore(warning, header.nextSibling);
+        }
+
+        return true; // 잠금 상태
+      }
+      return false; // 정상 사용 가능
+    }
+
     // 이벤트
     document.addEventListener('DOMContentLoaded', async () => {
       const token = getToken(); if (!token) return handleAuthError();
+
+      // ⭐️ 날짜 체크
+      const isLocked = checkInputLockDate();
+      if (isLocked) {
+        console.log('입력 잠금: 12/4 이전');
+        return; // 데이터 로드 안함
+      }
+
       await loadStudentsAndScores();
     });
     yearSelect.addEventListener('change', loadStudentsAndScores);
