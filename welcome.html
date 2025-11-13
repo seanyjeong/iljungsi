@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>정시 엔진 환영합니다</title>
+    <title>정시엔진</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -975,6 +975,12 @@
     <div class="today-content" id="today-counseling"><p class="no-data">오늘 상담 일정이 없습니다.</p></div>
     <h4><i class="fas fa-running" style="color: var(--practice-color);"></i> 오늘 실기 일정</h4>
     <div class="today-content" id="today-practice"><p class="no-data">오늘 실기 일정이 없습니다.</p></div>
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); text-align: center;">
+      <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+        <input type="checkbox" id="dont-show-today-checkbox" style="cursor: pointer;">
+        <span>24시간 동안 열지 않기</span>
+      </label>
+    </div>
   </div>
 </div>
 
@@ -1395,6 +1401,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeModal = (modalId) => {
         if (typeof modalId !== 'string') { console.error("closeModal: invalid ID", modalId); return; }
         const modalToClose = document.getElementById(modalId);
+
+        // ⭐️ "24시간 동안 열지 않기" 처리
+        if (modalId === 'today-info-modal') {
+            const dontShowCheckbox = document.getElementById('dont-show-today-checkbox');
+            if (dontShowCheckbox && dontShowCheckbox.checked) {
+                const now = new Date().getTime();
+                localStorage.setItem('today_modal_hide_until', now + (24 * 60 * 60 * 1000)); // 24시간 후
+                console.log('오늘의 정보 모달 24시간 동안 숨김 설정');
+            }
+        }
+
         if (modalToClose) { modalToClose.style.display = 'none'; console.log(`Modal ${modalId} closed.`); }
         else { console.warn(`Modal ${modalId} not found.`); }
     };
@@ -1438,6 +1455,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const todayPracticeDiv = document.getElementById('today-practice');
 
         if (!todayModal || !todayTitle || !todayAnnouncementDiv || !todayCounselingDiv || !todayPracticeDiv) { console.error("Missing today modal elements"); return; }
+
+        // ⭐️ 체크박스 초기화
+        const dontShowCheckbox = document.getElementById('dont-show-today-checkbox');
+        if (dontShowCheckbox) dontShowCheckbox.checked = false;
 
         const today = new Date(); const todayStr = formatDate(today);
         todayTitle.textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 오늘의 정보`;
@@ -1512,17 +1533,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show Today Info Modal & Start Reminders after delay
     setTimeout(() => {
+         // ⭐️ 24시간 동안 열지 않기 체크
+         const hideUntil = localStorage.getItem('today_modal_hide_until');
+         const shouldShowModal = !hideUntil || new Date().getTime() > parseInt(hideUntil);
+
          // Check if crucial components are ready AND student data loaded
          if (calendarInstances.counseling && calendarInstances.practice && branchStudents && branchStudents.length > 0) {
-              console.log("Initial load complete. Showing modal & starting reminders.");
-              showTodayInfoModal();
+              console.log("Initial load complete. Starting reminders.");
+              if (shouldShowModal) {
+                  console.log("Showing today info modal.");
+                  showTodayInfoModal();
+              } else {
+                  console.log("Today info modal hidden (24hr setting).");
+              }
               startReminderChecks();
          } else {
               console.warn("Initial data load incomplete. Modal/Reminders limited.");
               if (!branchStudents || branchStudents.length === 0) showToast("학생 정보 로딩 실패", true);
               if (!calendarInstances.counseling || !calendarInstances.practice) showToast("달력 정보 로딩 실패", true);
               // Attempt to show modal anyway, might have partial data
-              showTodayInfoModal();
+              if (shouldShowModal) {
+                  showTodayInfoModal();
+              }
          }
     }, 1200); // Delay
 
