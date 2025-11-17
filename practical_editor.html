@@ -7,102 +7,366 @@
     <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
         .controls {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
         }
-        .controls select, .controls button {
-            padding: 8px 12px;
+
+        .controls:hover {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        .controls label {
+            display: inline-block;
+            margin-right: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .controls select {
+            padding: 10px 16px;
             font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        #tables-container { margin-top: 20px; }
-        .table-group {
-            background: #fff;
-            padding: 15px;
+            border: 2px solid #e0e7ff;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+            margin-right: 12px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
+
+        .controls select:hover {
+            border-color: #667eea;
+        }
+
+        .controls select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls button {
+            padding: 10px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            margin-right: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #load-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #load-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        #load-button:active {
+            transform: translateY(0);
+        }
+
+        #save-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-weight: 700;
+        }
+
+        #save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        #save-button:active {
+            transform: translateY(0);
+        }
+
+        #save-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #status {
+            margin-left: 15px;
+            font-weight: 600;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        #tables-container {
+            margin-top: 30px;
+        }
+
+        .event-wrapper {
+            margin-bottom: 30px;
+            animation: slideIn 0.4s ease;
+        }
+
+        .event-title {
+            color: white;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tables-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .table-group {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 450px;
+            max-width: calc(50% - 10px);
+        }
+
+        @media (max-width: 1200px) {
+            .table-group {
+                max-width: 100%;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-group:hover {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
         .table-group h3 {
             margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.3em;
+            font-weight: 700;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
+
         /* ⭐️ 여기 수정: 높이/스크롤 제거해서 내용만큼 쭉 나오게 */
         .hot {
             width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #save-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 10px 15px;
-            font-weight: bold;
-        }
-        #save-button:disabled { background-color: #ccc; }
-        #status { margin-left: 10px; font-weight: bold; }
 
         /* ⭐️ 로그인 모달 CSS ⭐️ */
         #login-overlay {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
             z-index: 998;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         #login-modal {
             position: fixed;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             z-index: 999;
-            width: 320px;
+            width: 380px;
             display: none;
+            animation: modalSlideIn 0.4s ease;
         }
-        #login-modal h2 { margin-top: 0; text-align: center; }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        #login-modal h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        #login-modal p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+
         #login-modal input[type="text"],
         #login-modal input[type="password"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            border: 2px solid #e0e7ff;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
         }
+
+        #login-modal input[type="text"]:focus,
+        #login-modal input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        #login-modal input::placeholder {
+            color: #aaa;
+        }
+
         #login-modal-button {
             width: 100%;
-            padding: 12px;
-            background-color: #007bff;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
-        #login-modal-button:hover { background-color: #0056b3; }
+
+        #login-modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #login-modal-button:active {
+            transform: translateY(0);
+        }
+
+        #login-modal-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         #login-error-msg {
-            color: red;
+            color: #f5576c;
             font-size: 14px;
             text-align: center;
+            margin-top: 15px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        /* 새 그룹 추가 버튼 스타일 */
+        #tables-container > button {
+            padding: 12px 28px;
+            font-size: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
             margin-top: 10px;
-            height: 20px;
+        }
+
+        #tables-container > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        #tables-container > button:active {
+            transform: translateY(0);
+        }
+
+        /* Handsontable 스타일 개선 */
+        .handsontable th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            font-weight: 600 !important;
+        }
+
+        .handsontable td {
+            border-color: #e0e7ff !important;
         }
     </style>
 </head>
@@ -322,28 +586,50 @@
                     throw new Error('데이터 로드 실패');
                 }
 
-                const groupedData = groupBy(result.data, ['종목명', '성별']);
+                const groupedByEvent = groupBy(result.data, ['종목명']);
 
-                if (Object.keys(groupedData).length === 0) {
+                if (Object.keys(groupedByEvent).length === 0) {
                     setStatus('데이터 없음 (추가 가능)', false);
                 } else {
                     setStatus(`총 ${result.data.length}개 행 로드.`, false);
                 }
 
-                for (const groupKey in groupedData) {
-                    const [eventName, gender] = groupKey.split('||');
-                    const groupData = groupedData[groupKey];
+                for (const eventName in groupedByEvent) {
+                    const eventData = groupedByEvent[eventName];
 
-                    const originalGroupData = groupData.map(d => ({
-                        id: d.id,
-                        종목명: d.종목명,
-                        성별: d.성별,
-                        기록: d.기록,
-                        배점: d.배점
-                    }));
-                    originalDataMap.set(groupKey, originalGroupData);
+                    // 종목별로 wrapper 생성
+                    const eventWrapper = document.createElement('div');
+                    eventWrapper.className = 'event-wrapper';
 
-                    createHotTable(eventName, gender, groupData);
+                    const eventTitle = document.createElement('div');
+                    eventTitle.className = 'event-title';
+                    eventTitle.textContent = eventName;
+                    eventWrapper.appendChild(eventTitle);
+
+                    const tablesRow = document.createElement('div');
+                    tablesRow.className = 'tables-row';
+                    eventWrapper.appendChild(tablesRow);
+
+                    tablesContainer.appendChild(eventWrapper);
+
+                    // 성별로 분리
+                    const groupedByGender = groupBy(eventData, ['성별']);
+
+                    for (const gender in groupedByGender) {
+                        const groupData = groupedByGender[gender];
+                        const groupKey = `${eventName}||${gender}`;
+
+                        const originalGroupData = groupData.map(d => ({
+                            id: d.id,
+                            종목명: d.종목명,
+                            성별: d.성별,
+                            기록: d.기록,
+                            배점: d.배점
+                        }));
+                        originalDataMap.set(groupKey, originalGroupData);
+
+                        createHotTable(eventName, gender, groupData, tablesRow);
+                    }
                 }
 
                 const addGroupButton = document.createElement('button');
@@ -365,7 +651,7 @@
         // ----------------------------------------
         // Handsontable 생성 (그룹별)
         // ----------------------------------------
-        function createHotTable(eventName, gender, groupData) {
+        function createHotTable(eventName, gender, groupData, parentContainer) {
             const groupKey = `${eventName}||${gender}`;
 
             const groupContainer = document.createElement('div');
@@ -373,14 +659,15 @@
             groupContainer.dataset.groupKey = groupKey;
 
             const title = document.createElement('h3');
-            title.textContent = `${eventName} (${gender})`;
+            const genderIcon = gender === '남' ? '♂' : gender === '여' ? '♀' : '';
+            title.textContent = `${genderIcon} ${gender}`;
             groupContainer.appendChild(title);
 
             const hotContainer = document.createElement('div');
             hotContainer.className = 'hot';
             groupContainer.appendChild(hotContainer);
 
-            tablesContainer.appendChild(groupContainer);
+            parentContainer.appendChild(groupContainer);
 
             const hot = new Handsontable(hotContainer, {
                 data: groupData,
