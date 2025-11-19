@@ -368,6 +368,13 @@
                     <option value="2027">2027</option>
                 </select>
             </div>
+            <div class="chip">
+                <label for="cut-type-select"><i class="fas fa-cut"></i> 컷 타입</label>
+                <select id="cut-type-select">
+                    <option value="branch">지점</option>
+                    <option value="max">MAX</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -503,8 +510,8 @@
                     <th>실기종목</th>
                     <th>탐구수</th>
                     <th>학생 환산점수</th>
-                    <th>지점컷</th>
-                    <th>MAX컷</th>
+                    <th id="cut-suneung-header">수능컷</th>
+                    <th id="cut-total-header">총점컷</th>
                     <th>상담목록추가</th>
                 </tr>
                 </thead>
@@ -537,6 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const yearSelect = document.getElementById('year-select');
     const studentSelect = document.getElementById('student-select');
+    const cutTypeSelect = document.getElementById('cut-type-select');
+    const cutSuneungHeader = document.getElementById('cut-suneung-header');
+    const cutTotalHeader = document.getElementById('cut-total-header');
 
     const filterTeaching = document.getElementById('filter-teaching');
     const filterExcludeSubject = document.getElementById('filter-exclude-subject');
@@ -578,6 +588,9 @@ function debounce(func, delay) {
     filterTeaching.addEventListener('change', renderFilteredResults);
     filterExcludeSubject.addEventListener('change', renderFilteredResults);
     filterInquiryCount.addEventListener('change', renderFilteredResults);
+
+    // 컷 타입 변경 시 재렌더링
+    cutTypeSelect.addEventListener('change', renderFilteredResults);
 
     // ✅ 검색 인풋 디바운스 필터링
     filterSearch.addEventListener('input', debounce(renderFilteredResults, 200));
@@ -903,6 +916,14 @@ function debounce(func, delay) {
             return;
         }
 
+        // 선택된 컷 타입 가져오기
+        const selectedCutType = cutTypeSelect.value;
+
+        // 컷 헤더 업데이트
+        const prefix = selectedCutType === 'branch' ? '지점' : 'MAX';
+        cutSuneungHeader.textContent = `${prefix} 수능컷`;
+        cutTotalHeader.textContent = `${prefix} 총점컷`;
+
         let html='';
         filtered.forEach(dept=>{
             const raw = {
@@ -926,8 +947,17 @@ function debounce(func, delay) {
 
             const formatPercent = p => (p==null||p==='')?'-':`${parseFloat(p)}`;
 
-            const branchCutView = (dept.branch_suneung_cut != null && dept.branch_suneung_cut !== '') ? dept.branch_suneung_cut : '-';
-            const maxCutView = (dept.max_suneung_cut != null && dept.max_suneung_cut !== '') ? dept.max_suneung_cut : '-';
+            // 선택된 컷 타입에 따라 표시할 값 결정
+            let suneungCut = '-';
+            let totalCut = '-';
+
+            if (selectedCutType === 'branch') {
+                suneungCut = (dept.branch_suneung_cut != null && dept.branch_suneung_cut !== '') ? dept.branch_suneung_cut : '-';
+                totalCut = (dept.branch_total_cut != null && dept.branch_total_cut !== '') ? Number(dept.branch_total_cut).toFixed(2) : '-';
+            } else if (selectedCutType === 'max') {
+                suneungCut = (dept.max_suneung_cut != null && dept.max_suneung_cut !== '') ? dept.max_suneung_cut : '-';
+                totalCut = (dept.max_total_cut != null && dept.max_total_cut !== '') ? Number(dept.max_total_cut).toFixed(2) : '-';
+            }
 
             html += `
             <tr data-uid="${dept.U_ID}">
@@ -951,8 +981,8 @@ function debounce(func, delay) {
                 <td class="col-score suneung-score-cell" id="suneung-score-${dept.U_ID}">
                     <span class="score-loading"><i class="fas fa-spinner fa-spin"></i></span>
                 </td>
-                <td class="col-cut">${branchCutView}</td>
-                <td class="col-cut">${maxCutView}</td>
+                <td class="col-cut">${suneungCut}</td>
+                <td class="col-cut">${totalCut}</td>
                 <td class="col-actions">
                     <button type="button" class="btn btn-success btn-sm btn-add" data-uid-add="${dept.U_ID}">
                         <i class="fas fa-plus"></i> 추가
