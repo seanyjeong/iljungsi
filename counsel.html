@@ -2115,9 +2115,9 @@ async function generateCounselPDF() {
 }
 
 /* =========================
-   인쇄 함수 (전역)
+   인쇄 함수 (전역) - PDF와 동일한 구조, 흰 배경
 ========================== */
-function printCounselPage() {
+async function printCounselPage() {
     // 학생 정보 가져오기
     const studentName = document.getElementById('selected-student-name')?.textContent || '학생';
     const schoolName = document.getElementById('selected-school-name')?.textContent || '';
@@ -2138,7 +2138,11 @@ function printCounselPage() {
     const naCards = document.querySelectorAll('#na-gun .result-card');
     const daCards = document.querySelectorAll('#da-gun .result-card');
 
-    // 인쇄용 HTML 생성
+    // 로고 Base64 로드
+    const topLogoBase64 = await loadBase64FromTxt('./top_logo.txt');
+    const bottomLogoBase64 = await loadBase64FromTxt('./bottom_logo.txt');
+
+    // 인쇄용 HTML 생성 (PDF와 동일한 구조, 흰 배경)
     let printContent = `
         <!DOCTYPE html>
         <html>
@@ -2146,63 +2150,127 @@ function printCounselPage() {
             <meta charset="UTF-8">
             <title>${studentName} - 정시 상담 자료</title>
             <style>
+                @page { size: A4; margin: 15mm; }
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; padding: 20px; color: #1e293b; }
-                .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #2563eb; }
-                .header h1 { font-size: 24px; color: #2563eb; margin-bottom: 5px; }
-                .header .year { font-size: 14px; color: #64748b; }
-                .warning { background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 11px; color: #991b1b; text-align: center; }
-                .student-info { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-                .student-info .name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-                .student-info .details { font-size: 13px; color: #64748b; }
-                .scores { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-                .scores span { background: #e2e8f0; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
+                body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; color: #1e293b; }
+
+                /* 표지 */
+                .cover-page {
+                    page-break-after: always;
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    border: 3px solid #2563eb;
+                    border-radius: 12px;
+                    padding: 40px;
+                }
+                .cover-top-deco { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 40px; }
+                .cover-line { width: 60px; height: 3px; background: #cbd5e1; border-radius: 2px; }
+                .cover-confidential { font-size: 12px; color: #94a3b8; letter-spacing: 3px; }
+                .cover-logo { width: 100px; height: auto; margin-bottom: 30px; }
+                .cover-title { font-size: 36px; font-weight: 800; color: #2563eb; margin-bottom: 10px; }
+                .cover-divider { width: 80px; height: 4px; background: #fbbf24; border-radius: 2px; margin: 20px 0; }
+                .cover-year { font-size: 18px; color: #64748b; padding: 10px 30px; border: 2px solid #e2e8f0; border-radius: 25px; margin-bottom: 40px; }
+                .cover-student { border: 2px solid #e2e8f0; padding: 30px 50px; border-radius: 16px; margin-bottom: 30px; }
+                .cover-student-label { font-size: 12px; color: #94a3b8; letter-spacing: 2px; margin-bottom: 8px; }
+                .cover-student-name { font-size: 32px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+                .cover-student-info { font-size: 14px; color: #64748b; }
+                .cover-warning { background: #fef2f2; border: 2px solid #fecaca; padding: 15px 25px; border-radius: 10px; max-width: 450px; }
+                .cover-warning p { font-size: 12px; color: #991b1b; line-height: 1.6; }
+                .cover-bottom { margin-top: 40px; }
+                .cover-bottom-logo { height: 45px; width: auto; margin-bottom: 10px; }
+                .cover-date { font-size: 11px; color: #94a3b8; }
+
+                /* 컨텐츠 */
+                .content-page { padding: 20px 0; }
+                .warning-banner { background: #fef2f2; border: 1px solid #fecaca; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 11px; color: #991b1b; text-align: center; }
+                .student-info { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+                .student-name { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+                .student-details { font-size: 13px; color: #64748b; margin-bottom: 10px; }
+                .scores { display: flex; flex-wrap: wrap; gap: 8px; }
+                .scores span { background: #e2e8f0; padding: 4px 10px; border-radius: 4px; font-size: 11px; }
+
+                /* 군 섹션 */
                 .gun-section { margin-bottom: 20px; }
-                .gun-section h2 { font-size: 16px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+                .gun-title { font-size: 15px; font-weight: 700; color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; }
+
+                /* 카드 */
                 .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
                 .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-                .card-header h3 { font-size: 14px; color: #2563eb; }
-                .card-header h3 span { display: block; font-size: 12px; color: #64748b; font-weight: normal; }
-                .card-metrics { font-size: 11px; color: #64748b; text-align: right; }
-                .card-body { font-size: 12px; }
-                .card-body table { width: 100%; border-collapse: collapse; }
-                .card-body td { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
-                .card-body td:first-child { color: #64748b; width: 80px; }
-                .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
+                .card-uni { font-size: 13px; font-weight: 700; color: #2563eb; }
+                .card-dept { font-size: 11px; color: #64748b; margin-left: 6px; }
+                .card-metrics { font-size: 10px; color: #64748b; text-align: right; }
+                .card-scores { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: #475569; margin-bottom: 8px; }
+                .card-total { color: #2563eb; font-weight: 700; }
+                .card-silgi-detail { background: #f0f9ff; padding: 8px; border-radius: 6px; border: 1px solid #bae6fd; margin-top: 8px; }
+                .card-silgi-title { font-size: 10px; color: #0369a1; font-weight: 600; margin-bottom: 4px; }
+                .card-silgi-row { display: flex; justify-content: space-between; font-size: 10px; color: #475569; padding: 2px 0; }
+                .card-silgi-score { color: #2563eb; }
+
+                /* 푸터 */
+                .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; }
+                .footer-logo { height: 35px; width: auto; margin-bottom: 8px; }
+                .footer-text { font-size: 10px; color: #94a3b8; }
+
                 @media print {
-                    body { padding: 10px; }
+                    .cover-page { height: auto; min-height: 90vh; }
                     .card { break-inside: avoid; }
                 }
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>정시 상담 자료</h1>
-                <div class="year">${year}학년도 정시 모집</div>
-            </div>
-
-            <div class="warning">
-                ⚠️ 본 자료는 맥스체대입시 자체 커트라인이 포함되어 있습니다. 절대 타인에게 배포 또는 공유를 금지합니다.
-            </div>
-
-            <div class="student-info">
-                <div class="name">${studentName}</div>
-                <div class="details">${schoolName} · ${gender}</div>
-                <div class="scores">
-                    <span>국어: ${scoreKor}</span>
-                    <span>수학: ${scoreMath}</span>
-                    <span>영어: ${scoreEng}</span>
-                    <span>한국사: ${scoreHist}</span>
-                    <span>탐구1: ${scoreInq1}</span>
-                    <span>탐구2: ${scoreInq2}</span>
+            <!-- 표지 -->
+            <div class="cover-page">
+                <div class="cover-top-deco">
+                    <div class="cover-line"></div>
+                    <div class="cover-confidential">CONFIDENTIAL</div>
+                    <div class="cover-line"></div>
+                </div>
+                ${topLogoBase64 ? `<img src="${topLogoBase64}" class="cover-logo">` : ''}
+                <h1 class="cover-title">정시 상담 자료</h1>
+                <div class="cover-divider"></div>
+                <div class="cover-year">${year}학년도 정시 모집</div>
+                <div class="cover-student">
+                    <div class="cover-student-label">STUDENT</div>
+                    <div class="cover-student-name">${studentName}</div>
+                    <div class="cover-student-info">${schoolName} · ${gender}</div>
+                </div>
+                <div class="cover-warning">
+                    <p>⚠️ 본 자료는 맥스체대입시 자체 커트라인이 포함되어 있습니다.<br><strong>절대 타인에게 배포 또는 공유를 금지합니다.</strong></p>
+                </div>
+                <div class="cover-bottom">
+                    ${bottomLogoBase64 ? `<img src="${bottomLogoBase64}" class="cover-bottom-logo">` : '<div style="font-size:20px;font-weight:700;color:#2563eb;">MAX 체대입시</div>'}
+                    <div class="cover-date">생성일: ${new Date().toLocaleDateString('ko-KR')}</div>
                 </div>
             </div>
+
+            <!-- 컨텐츠 -->
+            <div class="content-page">
+                <div class="warning-banner">
+                    ⚠️ 본 자료는 맥스체대입시 자체 커트라인이 포함되어 있습니다. 절대 타인에게 배포 또는 공유를 금지합니다.
+                </div>
+
+                <div class="student-info">
+                    <div class="student-name">${studentName}</div>
+                    <div class="student-details">${schoolName} · ${gender}</div>
+                    <div class="scores">
+                        <span>국어: ${scoreKor}</span>
+                        <span>수학: ${scoreMath}</span>
+                        <span>영어: ${scoreEng}</span>
+                        <span>한국사: ${scoreHist}</span>
+                        <span>탐구1: ${scoreInq1}</span>
+                        <span>탐구2: ${scoreInq2}</span>
+                    </div>
+                </div>
     `;
 
     // 군별 카드 추가
     const addGunSection = (title, cards) => {
         if (cards.length === 0) return '';
-        let html = `<div class="gun-section"><h2>${title} (${cards.length}개)</h2>`;
+        let html = `<div class="gun-section"><div class="gun-title">${title} (${cards.length}개)</div>`;
         cards.forEach(card => {
             html += createPrintCardHtml(card);
         });
@@ -2215,8 +2283,10 @@ function printCounselPage() {
     printContent += addGunSection('다군', daCards);
 
     printContent += `
-            <div class="footer">
-                맥스체대입시 | 생성일: ${new Date().toLocaleDateString('ko-KR')}
+                <div class="footer">
+                    ${bottomLogoBase64 ? `<img src="${bottomLogoBase64}" class="footer-logo">` : '<div style="font-size:16px;font-weight:700;color:#2563eb;margin-bottom:8px;">MAX 체대입시</div>'}
+                    <div class="footer-text">생성일: ${new Date().toLocaleDateString('ko-KR')}</div>
+                </div>
             </div>
         </body>
         </html>
@@ -2229,36 +2299,78 @@ function printCounselPage() {
     printWindow.focus();
     setTimeout(() => {
         printWindow.print();
-    }, 250);
+    }, 300);
 }
 
-// 인쇄용 카드 HTML 생성
+// 인쇄용 카드 HTML 생성 (실기 상세 포함)
 function createPrintCardHtml(card) {
     const header = card.querySelector('.result-card-header h3');
     const uniName = header?.childNodes[0]?.textContent?.trim() || '';
     const deptName = header?.querySelector('span')?.textContent?.trim() || '';
 
-    // 상단 메트릭 (지점컷, MAX컷 등)
-    const topMetrics = card.querySelector('.top-metrics')?.textContent?.trim() || '';
+    const scoreSuneung = card.querySelector('.score-suneung')?.textContent || '-';
+    const scoreNaeshin = card.querySelector('.score-naeshin')?.textContent || '0.00';
+    const scoreSilgi = card.querySelector('.score-silgi')?.textContent || '-';
+    const scoreTotal = card.querySelector('.score-total')?.textContent || '-';
 
-    // 테이블 데이터 추출
-    const rows = card.querySelectorAll('.result-card-body tr');
-    let tableHtml = '<table>';
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 2) {
-            tableHtml += `<tr><td>${cells[0].textContent}</td><td>${cells[1].textContent}</td></tr>`;
+    // 내신 점수 표시 여부
+    const naeshinRow = card.querySelector('.naeshin-score-row');
+    const hasNaeshin = naeshinRow && naeshinRow.style.display !== 'none';
+    const naeshinInput = card.querySelector('.naeshin-input');
+    const naeshinInputValue = naeshinInput?.value || '';
+
+    // 실기 종목별 기록과 점수
+    const practicalInputs = card.querySelectorAll('.practical-input');
+    const practicalDetails = [];
+    practicalInputs.forEach(input => {
+        const eventName = input.dataset.event || '';
+        const record = input.value || '';
+        const scoreDisplay = card.querySelector(`.practical-score-display[data-event-score-display="${eventName}"]`);
+        const score = scoreDisplay?.textContent || '-';
+        if (eventName && record) {
+            practicalDetails.push({ event: eventName, record: record, score: score });
         }
     });
-    tableHtml += '</table>';
+
+    // 메트릭 정보
+    const metrics = card.querySelector('.top-metrics');
+    const metricsText = metrics ? metrics.innerText.replace(/\n/g, ' | ') : '';
+
+    // 목표 실기 HTML
+    let silgiDetailHtml = '';
+    if (practicalDetails.length > 0) {
+        silgiDetailHtml = `
+            <div class="card-silgi-detail">
+                <div class="card-silgi-title">목표 실기</div>
+                ${practicalDetails.map(p => `
+                    <div class="card-silgi-row">
+                        <span>${p.event}: <strong>${p.record}</strong></span>
+                        <span class="card-silgi-score">${p.score}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 내신 입력값 표시
+    const naeshinDetail = hasNaeshin && naeshinInputValue ? ` (입력: ${naeshinInputValue})` : '';
 
     return `
         <div class="card">
             <div class="card-header">
-                <h3>${uniName}<span>${deptName}</span></h3>
-                <div class="card-metrics">${topMetrics.replace(/\n/g, ' | ')}</div>
+                <div>
+                    <span class="card-uni">${uniName}</span>
+                    <span class="card-dept">${deptName}</span>
+                </div>
+                <div class="card-metrics">${metricsText}</div>
             </div>
-            <div class="card-body">${tableHtml}</div>
+            <div class="card-scores">
+                <span><strong>수능:</strong> ${scoreSuneung}</span>
+                ${hasNaeshin ? `<span><strong>내신:</strong> ${scoreNaeshin}${naeshinDetail}</span>` : ''}
+                <span><strong>실기:</strong> ${scoreSilgi}</span>
+                <span class="card-total"><strong>목표 총점:</strong> ${scoreTotal}</span>
+            </div>
+            ${silgiDetailHtml}
         </div>
     `;
 }
