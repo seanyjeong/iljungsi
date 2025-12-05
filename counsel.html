@@ -1968,7 +1968,76 @@ async function generateCounselPDF() {
             document.body.removeChild(footerContainer);
         }
 
+        // 표지 추가 함수
+        async function addCoverPage() {
+            const coverContainer = document.createElement('div');
+            coverContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;height:1130px;font-family:Pretendard,sans-serif;background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);';
+            coverContainer.innerHTML = `
+                <div style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;color:#fff;text-align:center;">
+                    <!-- 상단 장식 -->
+                    <div style="position:absolute;top:40px;left:40px;right:40px;display:flex;justify-content:space-between;align-items:center;">
+                        <div style="width:60px;height:3px;background:rgba(255,255,255,0.3);border-radius:2px;"></div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:3px;">CONFIDENTIAL</div>
+                        <div style="width:60px;height:3px;background:rgba(255,255,255,0.3);border-radius:2px;"></div>
+                    </div>
+
+                    <!-- 로고/아이콘 영역 -->
+                    <div style="width:100px;height:100px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:40px;backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,0.2);">
+                        <div style="font-size:48px;">🎯</div>
+                    </div>
+
+                    <!-- 메인 타이틀 -->
+                    <h1 style="font-size:42px;font-weight:800;margin:0 0 15px 0;letter-spacing:-1px;text-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                        정시 상담 자료
+                    </h1>
+                    <div style="width:80px;height:4px;background:#fbbf24;border-radius:2px;margin-bottom:30px;"></div>
+
+                    <!-- 학년도 -->
+                    <div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);padding:12px 40px;border-radius:30px;margin-bottom:50px;border:1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size:20px;font-weight:600;">${year}학년도 정시 모집</span>
+                    </div>
+
+                    <!-- 학생 정보 카드 -->
+                    <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);padding:35px 50px;border-radius:20px;margin-bottom:40px;border:1px solid rgba(255,255,255,0.2);min-width:400px;">
+                        <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:10px;letter-spacing:2px;">STUDENT</div>
+                        <div style="font-size:36px;font-weight:700;margin-bottom:8px;">${studentName}</div>
+                        <div style="font-size:16px;color:rgba(255,255,255,0.8);">${schoolName} · ${gender}</div>
+                    </div>
+
+                    <!-- 경고문 -->
+                    <div style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);padding:15px 30px;border-radius:12px;max-width:500px;">
+                        <p style="font-size:12px;color:#fecaca;margin:0;line-height:1.6;">
+                            ⚠️ 본 자료는 맥스체대입시 자체 커트라인이 포함되어 있습니다.<br>
+                            <strong style="color:#fca5a5;">절대 타인에게 배포 또는 공유를 금지합니다.</strong>
+                        </p>
+                    </div>
+
+                    <!-- 하단 정보 -->
+                    <div style="position:absolute;bottom:50px;left:0;right:0;text-align:center;">
+                        <div style="font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:2px;">
+                            <span style="color:#fbbf24;">MAX</span> 체대입시
+                        </div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5);">
+                            생성일: ${new Date().toLocaleDateString('ko-KR')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(coverContainer);
+
+            const canvas = await html2canvas(coverContainer, { scale: 2, useCORS: true, logging: false });
+            const imgData = canvas.toDataURL('image/png');
+
+            // A4 전체 페이지로 표지 추가
+            pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+            pdf.addPage();
+            currentY = margin;
+
+            document.body.removeChild(coverContainer);
+        }
+
         // PDF 생성 실행
+        await addCoverPage();
         await addHeaderSection();
 
         // 가군
