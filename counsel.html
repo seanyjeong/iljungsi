@@ -1849,6 +1849,13 @@ async function generateCounselPDF() {
             const headerContainer = document.createElement('div');
             headerContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:20px;font-family:Pretendard,sans-serif;background:#fff;';
             headerContainer.innerHTML = `
+                <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+                    <p style="font-size:11px;color:#b91c1c;margin:0;line-height:1.5;">
+                        <strong>⚠️ 주의:</strong> 본 자료는 맥스체대입시 자체 커트라인이 제공되어 있습니다.
+                        <strong>절대 타인에게 배포 또는 공유를 금지</strong>합니다.
+                        배포 또는 공유 시 법적 제재를 받을 수 있습니다.
+                    </p>
+                </div>
                 <div style="text-align:center;margin-bottom:15px;padding-bottom:12px;border-bottom:3px solid #2563eb;">
                     <h1 style="font-size:26px;color:#2563eb;margin:0 0 6px 0;">맥스체대입시 정시 상담 자료</h1>
                     <p style="font-size:13px;color:#666;margin:0;">${year}학년도 정시 모집</p>
