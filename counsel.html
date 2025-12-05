@@ -1804,6 +1804,20 @@ function debounce(func, delay) {
 });
 
 /* =========================
+   txt 파일에서 Base64 문자열 불러오기 (전역)
+========================== */
+async function loadBase64FromTxt(txtUrl) {
+    try {
+        const response = await fetch(txtUrl);
+        if (!response.ok) throw new Error('Failed to fetch');
+        return await response.text();
+    } catch (e) {
+        console.error('로고 로드 실패:', e);
+        return '';
+    }
+}
+
+/* =========================
    PDF 생성 함수 (전역)
 ========================== */
 async function generateCounselPDF() {
@@ -1972,18 +1986,6 @@ async function generateCounselPDF() {
 
             pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeight);
             document.body.removeChild(footerContainer);
-        }
-
-        // txt 파일에서 Base64 문자열 불러오기
-        async function loadBase64FromTxt(txtUrl) {
-            try {
-                const response = await fetch(txtUrl);
-                if (!response.ok) throw new Error('Failed to fetch');
-                return await response.text();
-            } catch (e) {
-                console.error('로고 로드 실패:', e);
-                return '';
-            }
         }
 
         // 표지 추가 함수
