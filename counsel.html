@@ -1968,8 +1968,30 @@ async function generateCounselPDF() {
             document.body.removeChild(footerContainer);
         }
 
+        // 이미지를 Base64로 변환하는 함수
+        async function loadImageAsBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => resolve(''); // 실패시 빈 문자열
+                img.src = url;
+            });
+        }
+
         // 표지 추가 함수
         async function addCoverPage() {
+            // 이미지 미리 로드
+            const topLogoBase64 = await loadImageAsBase64('https://github.com/seanyjeong/supermax/blob/main/maxmax.png?raw=true');
+            const bottomLogoBase64 = await loadImageAsBase64('https://github.com/seanyjeong/26maxsusi/blob/main/%EB%A7%A5%EC%8A%A4%EB%A1%9C%EA%B3%A01.png?raw=true');
+
             const coverContainer = document.createElement('div');
             coverContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;height:1130px;font-family:Pretendard,sans-serif;background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);';
             coverContainer.innerHTML = `
@@ -1982,7 +2004,7 @@ async function generateCounselPDF() {
                     </div>
 
                     <!-- 로고/아이콘 영역 -->
-                    <img src="https://github.com/seanyjeong/supermax/blob/main/maxmax.png?raw=true" style="width:120px;height:auto;margin-bottom:40px;" crossorigin="anonymous">
+                    ${topLogoBase64 ? `<img src="${topLogoBase64}" style="width:120px;height:auto;margin-bottom:40px;">` : ''}
 
                     <!-- 메인 타이틀 -->
                     <h1 style="font-size:42px;font-weight:800;margin:0 0 15px 0;letter-spacing:-1px;text-shadow:0 4px 20px rgba(0,0,0,0.3);">
@@ -2012,7 +2034,7 @@ async function generateCounselPDF() {
 
                     <!-- 하단 정보 -->
                     <div style="position:absolute;bottom:50px;left:0;right:0;text-align:center;">
-                        <img src="https://github.com/seanyjeong/26maxsusi/blob/main/%EB%A7%A5%EC%8A%A4%EB%A1%9C%EA%B3%A01.png?raw=true" style="height:50px;width:auto;margin-bottom:12px;" crossorigin="anonymous">
+                        ${bottomLogoBase64 ? `<img src="${bottomLogoBase64}" style="height:50px;width:auto;margin-bottom:12px;">` : '<div style="font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:2px;"><span style="color:#fbbf24;">MAX</span> 체대입시</div>'}
                         <div style="font-size:12px;color:rgba(255,255,255,0.5);">
                             생성일: ${new Date().toLocaleDateString('ko-KR')}
                         </div>
@@ -2021,7 +2043,10 @@ async function generateCounselPDF() {
             `;
             document.body.appendChild(coverContainer);
 
-            const canvas = await html2canvas(coverContainer, { scale: 2, useCORS: true, logging: false });
+            // 이미지 로딩 대기
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const canvas = await html2canvas(coverContainer, { scale: 2, useCORS: true, logging: false, allowTaint: true });
             const imgData = canvas.toDataURL('image/png');
 
             // A4 전체 페이지로 표지 추가
