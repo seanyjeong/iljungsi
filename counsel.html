@@ -1823,65 +1823,14 @@ async function generateCounselPDF() {
     const naCards = document.querySelectorAll('#na-gun .result-card');
     const daCards = document.querySelectorAll('#da-gun .result-card');
 
-    // PDF용 HTML 생성
-    const pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:30px;font-family:Pretendard,sans-serif;background:#fff;';
-
-    pdfContainer.innerHTML = `
-        <div style="text-align:center;margin-bottom:20px;padding-bottom:15px;border-bottom:3px solid #2563eb;">
-            <h1 style="font-size:28px;color:#2563eb;margin:0 0 8px 0;">맥스체대입시 정시 상담 자료</h1>
-            <p style="font-size:14px;color:#666;margin:0;">${year}학년도 정시 모집</p>
-        </div>
-
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;">
-            <div style="display:flex;gap:20px;margin-bottom:12px;font-size:15px;">
-                <span><strong>학생명:</strong> ${studentName}</span>
-                <span><strong>학교:</strong> ${schoolName}</span>
-                <span><strong>성별:</strong> ${gender}</span>
-            </div>
-            <div style="padding-top:12px;border-top:1px dashed #e2e8f0;font-size:13px;color:#475569;">
-                <div style="display:flex;flex-wrap:wrap;gap:10px;">
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreKor}</span>
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreMath}</span>
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreEng}</span>
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreHist}</span>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreInq1}</span>
-                    <span style="background:#fff;padding:4px 10px;border-radius:5px;border:1px solid #e2e8f0;">${scoreInq2}</span>
-                </div>
-            </div>
-        </div>
-
-        ${createGunSection('가군', gaCards)}
-        ${createGunSection('나군', naCards)}
-        ${createGunSection('다군', daCards)}
-
-        <div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;font-size:12px;color:#999;">
-            생성일: ${new Date().toLocaleDateString('ko-KR')} | 맥스체대입시
-        </div>
-    `;
-
-    document.body.appendChild(pdfContainer);
+    // 버튼 비활성화
+    const btn = document.getElementById('pdf-download-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 생성 중...';
+    }
 
     try {
-        // 버튼 비활성화
-        const btn = document.getElementById('pdf-download-btn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 생성 중...';
-        }
-
-        // html2canvas로 캡처
-        const canvas = await html2canvas(pdfContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-        });
-
-        // PDF 생성
-        const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -1890,21 +1839,162 @@ async function generateCounselPDF() {
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth - 20;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const margin = 10;
+        const contentWidth = pageWidth - (margin * 2);
+        let currentY = margin;
+        let isFirstPage = true;
 
-        let heightLeft = imgHeight;
-        let position = 10;
+        // 헤더와 학생 정보를 캡처하는 함수
+        async function addHeaderSection() {
+            const headerContainer = document.createElement('div');
+            headerContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:20px;font-family:Pretendard,sans-serif;background:#fff;';
+            headerContainer.innerHTML = `
+                <div style="text-align:center;margin-bottom:15px;padding-bottom:12px;border-bottom:3px solid #2563eb;">
+                    <h1 style="font-size:26px;color:#2563eb;margin:0 0 6px 0;">맥스체대입시 정시 상담 자료</h1>
+                    <p style="font-size:13px;color:#666;margin:0;">${year}학년도 정시 모집</p>
+                </div>
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+                    <div style="display:flex;gap:20px;margin-bottom:10px;font-size:14px;">
+                        <span><strong>학생명:</strong> ${studentName}</span>
+                        <span><strong>학교:</strong> ${schoolName}</span>
+                        <span><strong>성별:</strong> ${gender}</span>
+                    </div>
+                    <div style="padding-top:10px;border-top:1px dashed #e2e8f0;font-size:12px;color:#475569;">
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreKor}</span>
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreMath}</span>
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreEng}</span>
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreHist}</span>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreInq1}</span>
+                            <span style="background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;">${scoreInq2}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(headerContainer);
 
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= (pageHeight - 20);
+            const canvas = await html2canvas(headerContainer, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight + 10;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-            heightLeft -= (pageHeight - 20);
+            pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeight);
+            currentY += imgHeight + 5;
+
+            document.body.removeChild(headerContainer);
         }
+
+        // 군 섹션 헤더를 추가하는 함수
+        async function addGunHeader(gunName, count) {
+            const headerContainer = document.createElement('div');
+            headerContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:10px 20px;font-family:Pretendard,sans-serif;background:#fff;';
+            headerContainer.innerHTML = `
+                <h2 style="font-size:15px;color:#1e293b;padding-bottom:6px;border-bottom:2px solid #2563eb;margin:0;display:flex;justify-content:space-between;">
+                    [${gunName}]
+                    <span style="background:#e2e8f0;padding:2px 10px;border-radius:10px;font-size:12px;color:#666;">${count}개</span>
+                </h2>
+            `;
+            document.body.appendChild(headerContainer);
+
+            const canvas = await html2canvas(headerContainer, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+            // 페이지 넘김 체크
+            if (currentY + imgHeight > pageHeight - margin) {
+                pdf.addPage();
+                currentY = margin + 15; // 새 페이지 상단 패딩
+            }
+
+            pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeight);
+            currentY += imgHeight + 3;
+
+            document.body.removeChild(headerContainer);
+        }
+
+        // 개별 카드를 추가하는 함수
+        async function addCard(card) {
+            const cardHtml = createCardHtml(card);
+            const cardContainer = document.createElement('div');
+            cardContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:5px 20px;font-family:Pretendard,sans-serif;background:#fff;';
+            cardContainer.innerHTML = cardHtml;
+            document.body.appendChild(cardContainer);
+
+            const canvas = await html2canvas(cardContainer, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+            // 카드가 잘릴 것 같으면 새 페이지로
+            if (currentY + imgHeight > pageHeight - margin) {
+                pdf.addPage();
+                currentY = margin + 15; // 새 페이지 상단 패딩
+            }
+
+            pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeight);
+            currentY += imgHeight + 2;
+
+            document.body.removeChild(cardContainer);
+        }
+
+        // 푸터 추가 함수
+        async function addFooter() {
+            const footerContainer = document.createElement('div');
+            footerContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;padding:10px 20px;font-family:Pretendard,sans-serif;background:#fff;';
+            footerContainer.innerHTML = `
+                <div style="text-align:center;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#999;">
+                    생성일: ${new Date().toLocaleDateString('ko-KR')} | 맥스체대입시
+                </div>
+            `;
+            document.body.appendChild(footerContainer);
+
+            const canvas = await html2canvas(footerContainer, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+            if (currentY + imgHeight > pageHeight - margin) {
+                pdf.addPage();
+                currentY = margin + 15;
+            }
+
+            pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeight);
+            document.body.removeChild(footerContainer);
+        }
+
+        // PDF 생성 실행
+        await addHeaderSection();
+
+        // 가군
+        if (gaCards.length > 0) {
+            await addGunHeader('가군', gaCards.length);
+            for (const card of gaCards) {
+                await addCard(card);
+            }
+        } else {
+            await addGunHeader('가군', 0);
+        }
+
+        // 나군
+        if (naCards.length > 0) {
+            await addGunHeader('나군', naCards.length);
+            for (const card of naCards) {
+                await addCard(card);
+            }
+        } else {
+            await addGunHeader('나군', 0);
+        }
+
+        // 다군
+        if (daCards.length > 0) {
+            await addGunHeader('다군', daCards.length);
+            for (const card of daCards) {
+                await addCard(card);
+            }
+        } else {
+            await addGunHeader('다군', 0);
+        }
+
+        await addFooter();
 
         // 다운로드
         const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -1920,14 +2010,87 @@ async function generateCounselPDF() {
         console.error('PDF 생성 오류:', error);
         alert('PDF 생성 중 오류가 발생했습니다.');
 
-        const btn = document.getElementById('pdf-download-btn');
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF 저장';
         }
-    } finally {
-        document.body.removeChild(pdfContainer);
     }
+}
+
+// 개별 카드 HTML 생성 함수
+function createCardHtml(card) {
+    const header = card.querySelector('.result-card-header h3');
+    const uniName = header?.childNodes[0]?.textContent?.trim() || '';
+    const deptName = header?.querySelector('span')?.textContent?.trim() || '';
+
+    const scoreSuneung = card.querySelector('.score-suneung')?.textContent || '-';
+    const scoreNaeshin = card.querySelector('.score-naeshin')?.textContent || '0.00';
+    const scoreSilgi = card.querySelector('.score-silgi')?.textContent || '-';
+    const scoreTotal = card.querySelector('.score-total')?.textContent || '-';
+
+    // 내신 점수 표시 여부
+    const naeshinRow = card.querySelector('.naeshin-score-row');
+    const hasNaeshin = naeshinRow && naeshinRow.style.display !== 'none';
+    const naeshinInput = card.querySelector('.naeshin-input');
+    const naeshinInputValue = naeshinInput?.value || '';
+
+    // 실기 종목별 기록과 점수
+    const practicalInputs = card.querySelectorAll('.practical-input');
+    const practicalDetails = [];
+    practicalInputs.forEach(input => {
+        const eventName = input.dataset.event || '';
+        const record = input.value || '';
+        const scoreDisplay = card.querySelector(`.practical-score-display[data-event-score-display="${eventName}"]`);
+        const score = scoreDisplay?.textContent || '-';
+        if (eventName && record) {
+            practicalDetails.push({ event: eventName, record: record, score: score });
+        }
+    });
+
+    // 메트릭 정보
+    const metrics = card.querySelector('.top-metrics');
+    const metricsText = metrics ? metrics.innerText.replace(/\n/g, ' | ') : '';
+
+    // 목표 실기 HTML
+    let silgiDetailHtml = '';
+    if (practicalDetails.length > 0) {
+        silgiDetailHtml = `
+            <div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
+                <div style="font-size:10px;color:#0369a1;font-weight:600;margin-bottom:3px;">목표 실기</div>
+                ${practicalDetails.map(p => `
+                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;padding:1px 0;">
+                        <span>${p.event}: <strong>${p.record}</strong></span>
+                        <span style="color:#2563eb;">${p.score}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 내신 입력값 표시
+    let naeshinDetailHtml = '';
+    if (hasNaeshin && naeshinInputValue) {
+        naeshinDetailHtml = `<span style="font-size:10px;color:#666;margin-left:3px;">(입력: ${naeshinInputValue})</span>`;
+    }
+
+    return `
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                <div>
+                    <strong style="font-size:13px;color:#2563eb;">${uniName}</strong>
+                    <span style="font-size:11px;color:#666;margin-left:6px;">${deptName}</span>
+                </div>
+                <div style="font-size:10px;color:#888;text-align:right;">${metricsText}</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:#475569;">
+                <span><strong>수능:</strong> ${scoreSuneung}</span>
+                ${hasNaeshin ? `<span><strong>내신:</strong> ${scoreNaeshin}${naeshinDetailHtml}</span>` : ''}
+                <span><strong>실기:</strong> ${scoreSilgi}</span>
+                <span style="color:#2563eb;font-weight:700;font-size:13px;"><strong>목표 총점:</strong> ${scoreTotal}</span>
+            </div>
+            ${silgiDetailHtml}
+        </div>
+    `;
 }
 
 function createGunSection(gunName, cards) {
@@ -1975,12 +2138,12 @@ function createGunSection(gunName, cards) {
         const metrics = card.querySelector('.top-metrics');
         const metricsText = metrics ? metrics.innerText.replace(/\n/g, ' | ') : '';
 
-        // 실기 상세 HTML 생성
+        // 목표 실기 HTML 생성
         let silgiDetailHtml = '';
         if (practicalDetails.length > 0) {
             silgiDetailHtml = `
                 <div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
-                    <div style="font-size:11px;color:#0369a1;font-weight:600;margin-bottom:4px;">실기 상세</div>
+                    <div style="font-size:11px;color:#0369a1;font-weight:600;margin-bottom:4px;">목표 실기</div>
                     ${practicalDetails.map(p => `
                         <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;padding:2px 0;">
                             <span>${p.event}: <strong>${p.record}</strong></span>
@@ -1998,7 +2161,7 @@ function createGunSection(gunName, cards) {
         }
 
         cardsHtml += `
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
                     <div>
                         <strong style="font-size:14px;color:#2563eb;">${uniName}</strong>
@@ -2010,7 +2173,7 @@ function createGunSection(gunName, cards) {
                     <span><strong>수능:</strong> ${scoreSuneung}</span>
                     ${hasNaeshin ? `<span><strong>내신:</strong> ${scoreNaeshin}${naeshinDetailHtml}</span>` : ''}
                     <span><strong>실기:</strong> ${scoreSilgi}</span>
-                    <span style="color:#2563eb;font-weight:700;font-size:14px;"><strong>총점:</strong> ${scoreTotal}</span>
+                    <span style="color:#2563eb;font-weight:700;font-size:14px;"><strong>목표 총점:</strong> ${scoreTotal}</span>
                 </div>
                 ${silgiDetailHtml}
             </div>
