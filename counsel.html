@@ -1989,8 +1989,8 @@ async function generateCounselPDF() {
         // 표지 추가 함수
         async function addCoverPage() {
             // 이미지 미리 로드
-            const topLogoBase64 = await loadImageAsBase64('https://github.com/seanyjeong/supermax/blob/main/maxmax.png?raw=true');
-            const bottomLogoBase64 = await loadImageAsBase64('https://github.com/seanyjeong/26maxsusi/blob/main/%EB%A7%A5%EC%8A%A4%EB%A1%9C%EA%B3%A01.png?raw=true');
+            const topLogoBase64 = await loadImageAsBase64('./maxmax.png');
+            const bottomLogoBase64 = await loadImageAsBase64('./maxlogo1.png');
 
             const coverContainer = document.createElement('div');
             coverContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;height:1130px;font-family:Pretendard,sans-serif;background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);';
