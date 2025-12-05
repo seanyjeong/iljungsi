@@ -1968,29 +1968,23 @@ async function generateCounselPDF() {
             document.body.removeChild(footerContainer);
         }
 
-        // 이미지를 Base64로 변환하는 함수
-        async function loadImageAsBase64(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.onerror = () => resolve(''); // 실패시 빈 문자열
-                img.src = url;
-            });
+        // txt 파일에서 Base64 문자열 불러오기
+        async function loadBase64FromTxt(txtUrl) {
+            try {
+                const response = await fetch(txtUrl);
+                if (!response.ok) throw new Error('Failed to fetch');
+                return await response.text();
+            } catch (e) {
+                console.error('로고 로드 실패:', e);
+                return '';
+            }
         }
 
         // 표지 추가 함수
         async function addCoverPage() {
-            // 이미지 미리 로드
-            const topLogoBase64 = await loadImageAsBase64('./maxmax.png');
-            const bottomLogoBase64 = await loadImageAsBase64('./maxlogo1.png');
+            // txt 파일에서 Base64 이미지 로드
+            const topLogoBase64 = await loadBase64FromTxt('./top_logo.txt');
+            const bottomLogoBase64 = await loadBase64FromTxt('./bottom_logo.txt');
 
             const coverContainer = document.createElement('div');
             coverContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;height:1130px;font-family:Pretendard,sans-serif;background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);';
