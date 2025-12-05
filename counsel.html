@@ -381,6 +381,9 @@
             <button id="pdf-download-btn" class="btn btn-primary" onclick="generateCounselPDF()" style="display:none;">
                 <i class="fas fa-file-pdf"></i> PDF 저장
             </button>
+            <button id="print-btn" class="btn btn-outline" onclick="printCounselPage()" style="display:none;">
+                <i class="fas fa-print"></i> 인쇄
+            </button>
         </div>
     </div>
 
@@ -1752,13 +1755,16 @@ function debounce(func, delay) {
 
     function updateStudentInfoCard(std) {
         const pdfBtn = document.getElementById('pdf-download-btn');
+        const printBtn = document.getElementById('print-btn');
         if (!std) {
             studentInfoContainer.style.display='none';
             if (pdfBtn) pdfBtn.style.display='none';
+            if (printBtn) printBtn.style.display='none';
             return;
         }
         studentInfoContainer.style.display='block';
         if (pdfBtn) pdfBtn.style.display='inline-flex';
+        if (printBtn) printBtn.style.display='inline-flex';
         studentInfoContainer.querySelector('#selected-student-name').textContent = std.student_name || '-';
         studentInfoContainer.querySelector('#selected-school-name').textContent = std.school_name || '정보없음';
         studentInfoContainer.querySelector('#selected-gender').textContent = std.gender || '-';
@@ -2106,6 +2112,155 @@ async function generateCounselPDF() {
             btn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF 저장';
         }
     }
+}
+
+/* =========================
+   인쇄 함수 (전역)
+========================== */
+function printCounselPage() {
+    // 학생 정보 가져오기
+    const studentName = document.getElementById('selected-student-name')?.textContent || '학생';
+    const schoolName = document.getElementById('selected-school-name')?.textContent || '';
+    const gender = document.getElementById('selected-gender')?.textContent || '';
+    const yearSelect = document.getElementById('year-select');
+    const year = yearSelect?.value || '2026';
+
+    // 점수 정보 가져오기
+    const scoreKor = document.getElementById('score-kor')?.textContent || '';
+    const scoreMath = document.getElementById('score-math')?.textContent || '';
+    const scoreEng = document.getElementById('score-eng')?.textContent || '';
+    const scoreHist = document.getElementById('score-hist')?.textContent || '';
+    const scoreInq1 = document.getElementById('score-inq1')?.textContent || '';
+    const scoreInq2 = document.getElementById('score-inq2')?.textContent || '';
+
+    // 저장된 대학 카드 가져오기
+    const gaCards = document.querySelectorAll('#ga-gun .result-card');
+    const naCards = document.querySelectorAll('#na-gun .result-card');
+    const daCards = document.querySelectorAll('#da-gun .result-card');
+
+    // 인쇄용 HTML 생성
+    let printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${studentName} - 정시 상담 자료</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; padding: 20px; color: #1e293b; }
+                .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #2563eb; }
+                .header h1 { font-size: 24px; color: #2563eb; margin-bottom: 5px; }
+                .header .year { font-size: 14px; color: #64748b; }
+                .warning { background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 11px; color: #991b1b; text-align: center; }
+                .student-info { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                .student-info .name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+                .student-info .details { font-size: 13px; color: #64748b; }
+                .scores { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+                .scores span { background: #e2e8f0; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
+                .gun-section { margin-bottom: 20px; }
+                .gun-section h2 { font-size: 16px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+                .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
+                .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+                .card-header h3 { font-size: 14px; color: #2563eb; }
+                .card-header h3 span { display: block; font-size: 12px; color: #64748b; font-weight: normal; }
+                .card-metrics { font-size: 11px; color: #64748b; text-align: right; }
+                .card-body { font-size: 12px; }
+                .card-body table { width: 100%; border-collapse: collapse; }
+                .card-body td { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
+                .card-body td:first-child { color: #64748b; width: 80px; }
+                .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
+                @media print {
+                    body { padding: 10px; }
+                    .card { break-inside: avoid; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>정시 상담 자료</h1>
+                <div class="year">${year}학년도 정시 모집</div>
+            </div>
+
+            <div class="warning">
+                ⚠️ 본 자료는 맥스체대입시 자체 커트라인이 포함되어 있습니다. 절대 타인에게 배포 또는 공유를 금지합니다.
+            </div>
+
+            <div class="student-info">
+                <div class="name">${studentName}</div>
+                <div class="details">${schoolName} · ${gender}</div>
+                <div class="scores">
+                    <span>국어: ${scoreKor}</span>
+                    <span>수학: ${scoreMath}</span>
+                    <span>영어: ${scoreEng}</span>
+                    <span>한국사: ${scoreHist}</span>
+                    <span>탐구1: ${scoreInq1}</span>
+                    <span>탐구2: ${scoreInq2}</span>
+                </div>
+            </div>
+    `;
+
+    // 군별 카드 추가
+    const addGunSection = (title, cards) => {
+        if (cards.length === 0) return '';
+        let html = `<div class="gun-section"><h2>${title} (${cards.length}개)</h2>`;
+        cards.forEach(card => {
+            html += createPrintCardHtml(card);
+        });
+        html += '</div>';
+        return html;
+    };
+
+    printContent += addGunSection('가군', gaCards);
+    printContent += addGunSection('나군', naCards);
+    printContent += addGunSection('다군', daCards);
+
+    printContent += `
+            <div class="footer">
+                맥스체대입시 | 생성일: ${new Date().toLocaleDateString('ko-KR')}
+            </div>
+        </body>
+        </html>
+    `;
+
+    // 새 창 열어서 인쇄
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
+}
+
+// 인쇄용 카드 HTML 생성
+function createPrintCardHtml(card) {
+    const header = card.querySelector('.result-card-header h3');
+    const uniName = header?.childNodes[0]?.textContent?.trim() || '';
+    const deptName = header?.querySelector('span')?.textContent?.trim() || '';
+
+    // 상단 메트릭 (지점컷, MAX컷 등)
+    const topMetrics = card.querySelector('.top-metrics')?.textContent?.trim() || '';
+
+    // 테이블 데이터 추출
+    const rows = card.querySelectorAll('.result-card-body tr');
+    let tableHtml = '<table>';
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 2) {
+            tableHtml += `<tr><td>${cells[0].textContent}</td><td>${cells[1].textContent}</td></tr>`;
+        }
+    });
+    tableHtml += '</table>';
+
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3>${uniName}<span>${deptName}</span></h3>
+                <div class="card-metrics">${topMetrics.replace(/\n/g, ' | ')}</div>
+            </div>
+            <div class="card-body">${tableHtml}</div>
+        </div>
+    `;
 }
 
 // 개별 카드 HTML 생성 함수
