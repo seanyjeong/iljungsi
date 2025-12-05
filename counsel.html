@@ -1948,13 +1948,54 @@ function createGunSection(gunName, cards) {
         const deptName = header?.querySelector('span')?.textContent?.trim() || '';
 
         const scoreSuneung = card.querySelector('.score-suneung')?.textContent || '-';
-        const scoreNaeshin = card.querySelector('.score-naeshin')?.textContent || '-';
+        const scoreNaeshin = card.querySelector('.score-naeshin')?.textContent || '0.00';
         const scoreSilgi = card.querySelector('.score-silgi')?.textContent || '-';
         const scoreTotal = card.querySelector('.score-total')?.textContent || '-';
+
+        // 내신 점수 표시 여부 (내신 행이 보이는지 확인)
+        const naeshinRow = card.querySelector('.naeshin-score-row');
+        const hasNaeshin = naeshinRow && naeshinRow.style.display !== 'none';
+        const naeshinInput = card.querySelector('.naeshin-input');
+        const naeshinInputValue = naeshinInput?.value || '';
+
+        // 실기 종목별 기록과 점수 가져오기
+        const practicalInputs = card.querySelectorAll('.practical-input');
+        const practicalDetails = [];
+        practicalInputs.forEach(input => {
+            const eventName = input.dataset.event || '';
+            const record = input.value || '';
+            const scoreDisplay = card.querySelector(`.practical-score-display[data-event-score-display="${eventName}"]`);
+            const score = scoreDisplay?.textContent || '-';
+            if (eventName && record) {
+                practicalDetails.push({ event: eventName, record: record, score: score });
+            }
+        });
 
         // 메트릭 정보
         const metrics = card.querySelector('.top-metrics');
         const metricsText = metrics ? metrics.innerText.replace(/\n/g, ' | ') : '';
+
+        // 실기 상세 HTML 생성
+        let silgiDetailHtml = '';
+        if (practicalDetails.length > 0) {
+            silgiDetailHtml = `
+                <div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
+                    <div style="font-size:11px;color:#0369a1;font-weight:600;margin-bottom:4px;">실기 상세</div>
+                    ${practicalDetails.map(p => `
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;padding:2px 0;">
+                            <span>${p.event}: <strong>${p.record}</strong></span>
+                            <span style="color:#2563eb;">${p.score}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 내신 입력값 표시
+        let naeshinDetailHtml = '';
+        if (hasNaeshin && naeshinInputValue) {
+            naeshinDetailHtml = `<span style="font-size:11px;color:#666;margin-left:4px;">(입력: ${naeshinInputValue})</span>`;
+        }
 
         cardsHtml += `
             <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;">
@@ -1965,12 +2006,13 @@ function createGunSection(gunName, cards) {
                     </div>
                     <div style="font-size:11px;color:#888;text-align:right;">${metricsText}</div>
                 </div>
-                <div style="display:flex;gap:15px;font-size:13px;color:#475569;">
+                <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#475569;">
                     <span><strong>수능:</strong> ${scoreSuneung}</span>
-                    <span><strong>내신:</strong> ${scoreNaeshin}</span>
+                    ${hasNaeshin ? `<span><strong>내신:</strong> ${scoreNaeshin}${naeshinDetailHtml}</span>` : ''}
                     <span><strong>실기:</strong> ${scoreSilgi}</span>
-                    <span style="color:#2563eb;font-weight:700;"><strong>총점:</strong> ${scoreTotal}</span>
+                    <span style="color:#2563eb;font-weight:700;font-size:14px;"><strong>총점:</strong> ${scoreTotal}</span>
                 </div>
+                ${silgiDetailHtml}
             </div>
         `;
     });
