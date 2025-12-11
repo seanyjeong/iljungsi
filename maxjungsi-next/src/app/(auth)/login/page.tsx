@@ -24,7 +24,9 @@ export default function LoginPage() {
       const result = await login(userid, password);
 
       if (result.success) {
-        router.push('/');
+        // 쿠키가 설정된 후 리다이렉트 (약간의 딜레이)
+        router.refresh();
+        window.location.href = '/';
       } else {
         setError(result.message || '로그인에 실패했습니다.');
       }
