@@ -22,11 +22,13 @@ export default function LoginPage() {
 
     try {
       const result = await login(userid, password);
+      console.log('Login result:', result);
 
       if (result.success) {
-        // 쿠키가 설정된 후 리다이렉트 (약간의 딜레이)
-        router.refresh();
-        window.location.href = '/';
+        // 쿠키가 설정된 후 리다이렉트
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 100);
       } else {
         setError(result.message || '로그인에 실패했습니다.');
       }
