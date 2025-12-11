@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface University {
   U_ID: number;
@@ -37,7 +38,7 @@ interface SilgiResult {
 }
 
 export default function CalculatorPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [search, setSearch] = useState('');
   const [universities, setUniversities] = useState<University[]>([]);
   const [selectedUniv, setSelectedUniv] = useState<University | null>(null);
@@ -76,7 +77,7 @@ export default function CalculatorPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/universities?year=${year}&search=${encodeURIComponent(search)}`
       );
       const data = await res.json();
@@ -98,7 +99,7 @@ export default function CalculatorPage() {
 
     // 실기 종목 조회
     try {
-      const res = await fetch(`/api/calculate/silgi?uid=${univ.U_ID}&year=${year}`);
+      const res = await apiFetch(`/api/calculate/silgi?uid=${univ.U_ID}&year=${year}`);
       const data = await res.json();
       if (data.success && data.events) {
         setSilgiEvents(data.events);
@@ -154,9 +155,8 @@ export default function CalculatorPage() {
         },
       };
 
-      const suneungRes = await fetch('/api/calculate/suneung', {
+      const suneungRes = await apiFetch('/api/calculate/suneung', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: selectedUniv.U_ID,
           year,
@@ -179,9 +179,8 @@ export default function CalculatorPage() {
           }));
 
         if (studentRecords.length > 0) {
-          const silgiRes = await fetch('/api/calculate/silgi', {
+          const silgiRes = await apiFetch('/api/calculate/silgi', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               uid: selectedUniv.U_ID,
               year,
@@ -223,8 +222,8 @@ export default function CalculatorPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
               <option value={2026}>2026학년도</option>
+              <option value={2027}>2027학년도</option>
             </select>
             <Input
               placeholder="대학명 또는 학과명 검색..."

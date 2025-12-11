@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 import type { Student } from '@/types/student';
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026); // 현재 입시년도 (2025년 기준)
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -25,7 +26,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/students?year=${year}`);
+      const res = await apiFetch(`/api/students?year=${year}`);
       const data = await res.json();
       if (data.success) {
         setStudents(data.students);
@@ -49,9 +50,8 @@ export default function StudentsPage() {
     }
 
     try {
-      const res = await fetch('/api/students', {
+      const res = await apiFetch('/api/students', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           students: [newStudent],
           year,
@@ -77,9 +77,8 @@ export default function StudentsPage() {
     if (!editingStudent) return;
 
     try {
-      const res = await fetch(`/api/students/${editingStudent.student_id}`, {
+      const res = await apiFetch(`/api/students/${editingStudent.student_id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_name: editingStudent.student_name,
           school_name: editingStudent.school_name,
@@ -107,7 +106,7 @@ export default function StudentsPage() {
     }
 
     try {
-      const res = await fetch(`/api/students/${studentId}`, {
+      const res = await apiFetch(`/api/students/${studentId}`, {
         method: 'DELETE',
       });
 
@@ -150,8 +149,8 @@ export default function StudentsPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
-              <option value={2026}>2026학년도</option>
+              <option value={2026}>2026학년도 (현재)</option>
+              <option value={2027}>2027학년도 (내년)</option>
               <option value={2025}>2025학년도</option>
             </select>
             <Input

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface University {
   U_ID: number;
@@ -12,7 +13,7 @@ interface University {
 }
 
 export default function AdminSettingsPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [search, setSearch] = useState('');
   const [universities, setUniversities] = useState<University[]>([]);
   const [selectedUniv, setSelectedUniv] = useState<University | null>(null);
@@ -28,7 +29,7 @@ export default function AdminSettingsPage() {
     if (!search.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/universities?year=${year}&search=${encodeURIComponent(search)}`);
+      const res = await apiFetch(`/api/universities?year=${year}&search=${encodeURIComponent(search)}`);
       const data = await res.json();
       if (data.success) {
         setUniversities(data.universities);
@@ -45,7 +46,7 @@ export default function AdminSettingsPage() {
     setSelectedUniv(univ);
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/settings?uid=${univ.U_ID}&year=${year}`);
+      const res = await apiFetch(`/api/admin/settings?uid=${univ.U_ID}&year=${year}`);
       const data = await res.json();
       if (data.success) {
         setEnglishScores(data.data.englishScores || getDefaultEnglishScores());
@@ -80,9 +81,8 @@ export default function AdminSettingsPage() {
     if (!selectedUniv) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await apiFetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: selectedUniv.U_ID,
           year,
@@ -122,8 +122,8 @@ export default function AdminSettingsPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
               <option value={2026}>2026학년도</option>
+              <option value={2027}>2027학년도</option>
             </select>
             <Input
               placeholder="대학명 또는 학과명..."

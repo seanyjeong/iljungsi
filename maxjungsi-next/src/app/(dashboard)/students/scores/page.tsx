@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface StudentWithScore {
   student_id: number;
@@ -35,7 +36,7 @@ interface StudentWithScore {
 type ScoreField = keyof Omit<StudentWithScore, 'student_id' | 'student_name' | 'school_name' | 'gender' | 'branch_name'>;
 
 export default function ScoresPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [students, setStudents] = useState<StudentWithScore[]>([]);
   const [editedScores, setEditedScores] = useState<Record<number, Partial<StudentWithScore>>>({});
   const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ export default function ScoresPage() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/students/scores?year=${year}`);
+      const res = await apiFetch(`/api/students/scores?year=${year}`);
       const data = await res.json();
       if (data.success) {
         setStudents(data.students);
@@ -141,9 +142,8 @@ export default function ScoresPage() {
         };
       });
 
-      const res = await fetch('/api/students/scores', {
+      const res = await apiFetch('/api/students/scores', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scores, year, is_official: isOfficial }),
       });
 
@@ -177,8 +177,8 @@ export default function ScoresPage() {
             onChange={(e) => setYear(Number(e.target.value))}
             className="px-3 py-2 border border-gray-300 rounded-lg"
           >
-            <option value={2027}>2027학년도</option>
             <option value={2026}>2026학년도</option>
+            <option value={2027}>2027학년도</option>
           </select>
           <label className="flex items-center gap-2">
             <input

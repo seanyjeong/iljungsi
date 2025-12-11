@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface GradeCut {
   등급: number;
@@ -21,7 +22,7 @@ const DEFAULT_SUBJECTS = [
 ];
 
 export default function GradecutPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [model, setModel] = useState('6모');
   const [models, setModels] = useState<string[]>(['6모', '9모', '수능']);
   const [subjects, setSubjects] = useState<string[]>(DEFAULT_SUBJECTS);
@@ -34,7 +35,7 @@ export default function GradecutPage() {
   const fetchGradeCuts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/gradecut?year=${year}&model=${model}`);
+      const res = await apiFetch(`/api/admin/gradecut?year=${year}&model=${model}`);
       const data = await res.json();
       if (data.success) {
         // 과목 목록 업데이트
@@ -78,7 +79,7 @@ export default function GradecutPage() {
     setSelectedSubject(subject);
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/gradecut?year=${year}&model=${model}`);
+      const res = await apiFetch(`/api/admin/gradecut?year=${year}&model=${model}`);
       const data = await res.json();
       if (data.success && data.data[subject]) {
         setCuts(data.data[subject]);
@@ -107,9 +108,8 @@ export default function GradecutPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/gradecut', {
+      const res = await apiFetch('/api/admin/gradecut', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           year,
           model,
@@ -146,8 +146,8 @@ export default function GradecutPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
               <option value={2026}>2026학년도</option>
+              <option value={2027}>2027학년도</option>
             </select>
             <select
               value={model}

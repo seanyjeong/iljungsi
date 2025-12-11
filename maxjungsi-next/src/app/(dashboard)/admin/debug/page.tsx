@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface DebugNote {
   U_ID: number;
@@ -22,7 +23,7 @@ interface University {
 }
 
 export default function DebugNotesPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [notes, setNotes] = useState<DebugNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<number | null>(null);
@@ -37,7 +38,7 @@ export default function DebugNotesPage() {
   const fetchNotes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/debug-notes?year=${year}`);
+      const res = await apiFetch(`/api/admin/debug-notes?year=${year}`);
       const data = await res.json();
       if (data.success) {
         setNotes(data.list || []);
@@ -57,7 +58,7 @@ export default function DebugNotesPage() {
   const searchUniversities = async () => {
     if (!search.trim()) return;
     try {
-      const res = await fetch(`/api/universities?year=${year}&search=${encodeURIComponent(search)}`);
+      const res = await apiFetch(`/api/universities?year=${year}&search=${encodeURIComponent(search)}`);
       const data = await res.json();
       if (data.success) {
         setSearchResults(data.universities || []);
@@ -72,9 +73,8 @@ export default function DebugNotesPage() {
     if (!selectedUniv) return;
     setSaving(selectedUniv.U_ID);
     try {
-      const res = await fetch('/api/admin/debug-notes', {
+      const res = await apiFetch('/api/admin/debug-notes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           U_ID: selectedUniv.U_ID,
           year,
@@ -104,9 +104,8 @@ export default function DebugNotesPage() {
   const handleUpdateNote = async (note: DebugNote) => {
     setSaving(note.U_ID);
     try {
-      const res = await fetch('/api/admin/debug-notes', {
+      const res = await apiFetch('/api/admin/debug-notes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           U_ID: note.U_ID,
           year,
@@ -164,8 +163,8 @@ export default function DebugNotesPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
               <option value={2026}>2026학년도</option>
+              <option value={2027}>2027학년도</option>
             </select>
           </div>
         </CardContent>

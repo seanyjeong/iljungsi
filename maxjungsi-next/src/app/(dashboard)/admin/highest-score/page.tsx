@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface HighestScore {
   과목명: string;
@@ -19,7 +20,7 @@ const DEFAULT_SUBJECTS = [
 ];
 
 export default function HighestScorePage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [model, setModel] = useState('6모');
   const [models, setModels] = useState<string[]>(['6모', '9모', '수능']);
   const [scores, setScores] = useState<HighestScore[]>([]);
@@ -30,7 +31,7 @@ export default function HighestScorePage() {
   const fetchHighestScores = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/highest-score?year=${year}&model=${model}`);
+      const res = await apiFetch(`/api/admin/highest-score?year=${year}&model=${model}`);
       const data = await res.json();
       if (data.success) {
         // 기본 과목 목록에 DB 데이터 병합
@@ -71,9 +72,8 @@ export default function HighestScorePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/highest-score', {
+      const res = await apiFetch('/api/admin/highest-score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           year,
           model,
@@ -116,8 +116,8 @@ export default function HighestScorePage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value={2027}>2027학년도</option>
               <option value={2026}>2026학년도</option>
+              <option value={2027}>2027학년도</option>
             </select>
             <select
               value={model}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { apiFetch } from '@/lib/api';
 
 interface Template {
   name: string;
@@ -33,7 +34,7 @@ export default function AdminUploadPage() {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const res = await fetch('/api/admin/upload/template');
+        const res = await apiFetch('/api/admin/upload/template');
         const data = await res.json();
         if (data.success) {
           const templateList = data.templates.map((name: string) => ({
@@ -57,7 +58,7 @@ export default function AdminUploadPage() {
     }
 
     try {
-      const res = await fetch(`/api/admin/upload/template?table=${selectedTable}`);
+      const res = await apiFetch(`/api/admin/upload/template?table=${selectedTable}`);
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -96,7 +97,7 @@ export default function AdminUploadPage() {
       formData.append('table', selectedTable);
       formData.append('mode', 'preview');
 
-      const res = await fetch('/api/admin/upload/process', {
+      const res = await apiFetch('/api/admin/upload/process', {
         method: 'POST',
         body: formData,
       });
@@ -133,7 +134,7 @@ export default function AdminUploadPage() {
       formData.append('table', selectedTable);
       formData.append('mode', 'execute');
 
-      const res = await fetch('/api/admin/upload/process', {
+      const res = await apiFetch('/api/admin/upload/process', {
         method: 'POST',
         body: formData,
       });

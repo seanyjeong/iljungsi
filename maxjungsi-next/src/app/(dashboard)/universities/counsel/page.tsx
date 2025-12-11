@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { generateCounselPDF } from '@/lib/pdf-generator';
+import { apiFetch } from '@/lib/api';
 
 interface Student {
   student_id: number;
@@ -47,7 +48,7 @@ interface ScoreData {
 }
 
 export default function CounselPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [studentScore, setStudentScore] = useState<ScoreData | null>(null);
@@ -63,7 +64,7 @@ export default function CounselPage() {
   // 학생 목록 조회
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`/api/students?year=${year}`);
+      const res = await apiFetch(`/api/students?year=${year}`);
       const data = await res.json();
       if (data.success) {
         setStudents(data.students);
@@ -76,7 +77,7 @@ export default function CounselPage() {
   // 학생 성적 조회
   const fetchStudentScore = async (studentId: number) => {
     try {
-      const res = await fetch(`/api/students/scores?year=${year}&student_ids=${studentId}`);
+      const res = await apiFetch(`/api/students/scores?year=${year}&student_ids=${studentId}`);
       const data = await res.json();
       if (data.success && data.students.length > 0) {
         const s = data.students[0];
@@ -104,7 +105,7 @@ export default function CounselPage() {
   const fetchWishlist = async (studentId: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/counseling/wishlist?student_id=${studentId}&year=${year}`);
+      const res = await apiFetch(`/api/counseling/wishlist?student_id=${studentId}&year=${year}`);
       const data = await res.json();
       if (data.success) {
         setWishlist(data.wishlist);
@@ -128,7 +129,7 @@ export default function CounselPage() {
   const searchUniversities = async () => {
     if (!searchTerm.trim()) return;
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/universities?year=${year}&search=${encodeURIComponent(searchTerm)}`
       );
       const data = await res.json();
@@ -145,9 +146,8 @@ export default function CounselPage() {
     if (!selectedStudent) return;
 
     try {
-      const res = await fetch('/api/counseling/wishlist', {
+      const res = await apiFetch('/api/counseling/wishlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_id: selectedStudent.student_id,
           uid,
@@ -175,7 +175,7 @@ export default function CounselPage() {
     if (!confirm('삭제하시겠습니까?')) return;
 
     try {
-      const res = await fetch(`/api/counseling/wishlist?id=${id}`, {
+      const res = await apiFetch(`/api/counseling/wishlist?id=${id}`, {
         method: 'DELETE',
       });
 
@@ -196,9 +196,8 @@ export default function CounselPage() {
     try {
       for (const item of wishlist) {
         // 수능 점수 계산
-        const suneungRes = await fetch('/api/calculate/suneung', {
+        const suneungRes = await apiFetch('/api/calculate/suneung', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             uid: item.U_ID,
             year,
@@ -233,9 +232,8 @@ export default function CounselPage() {
         const suneungScore = suneungData.success ? suneungData.result.총점 : 0;
 
         // 상담 목록 업데이트
-        await fetch('/api/counseling/wishlist', {
+        await apiFetch('/api/counseling/wishlist', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: item.id,
             suneung_score: suneungScore,
@@ -296,8 +294,8 @@ export default function CounselPage() {
           onChange={(e) => setYear(Number(e.target.value))}
           className="px-3 py-2 border border-gray-300 rounded-lg"
         >
-          <option value={2027}>2027학년도</option>
           <option value={2026}>2026학년도</option>
+          <option value={2027}>2027학년도</option>
         </select>
       </div>
 

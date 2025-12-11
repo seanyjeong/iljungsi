@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiFetch } from '@/lib/api';
 
 interface Student {
   student_id: number;
@@ -39,7 +40,7 @@ interface FinalApply {
 const GROUPS = ['가', '나', '다'];
 
 export default function FinalApplyPage() {
-  const [year, setYear] = useState(2027);
+  const [year, setYear] = useState(2026);
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -54,7 +55,7 @@ export default function FinalApplyPage() {
   // 학생 목록 조회
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`/api/students?year=${year}`);
+      const res = await apiFetch(`/api/students?year=${year}`);
       const data = await res.json();
       if (data.success) {
         setStudents(data.students);
@@ -68,7 +69,7 @@ export default function FinalApplyPage() {
   const fetchWishlist = async (studentId: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/counseling/wishlist?student_id=${studentId}&year=${year}`);
+      const res = await apiFetch(`/api/counseling/wishlist?student_id=${studentId}&year=${year}`);
       const data = await res.json();
       if (data.success) {
         setWishlist(data.wishlist);
@@ -83,7 +84,7 @@ export default function FinalApplyPage() {
   // 최종 지원 조회
   const fetchFinalApplies = async (studentId: number) => {
     try {
-      const res = await fetch(`/api/final-apply?student_id=${studentId}&year=${year}`);
+      const res = await apiFetch(`/api/final-apply?student_id=${studentId}&year=${year}`);
       const data = await res.json();
       if (data.success) {
         const applies: Record<string, FinalApply | null> = { 가: null, 나: null, 다: null };
@@ -158,9 +159,8 @@ export default function FinalApplyPage() {
           total_score: apply!.total_score,
         }));
 
-      const res = await fetch('/api/final-apply', {
+      const res = await apiFetch('/api/final-apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_id: selectedStudent.student_id,
           year,
@@ -202,8 +202,8 @@ export default function FinalApplyPage() {
           onChange={(e) => setYear(Number(e.target.value))}
           className="px-3 py-2 border border-gray-300 rounded-lg"
         >
-          <option value={2027}>2027학년도</option>
           <option value={2026}>2026학년도</option>
+          <option value={2027}>2027학년도</option>
         </select>
       </div>
 
