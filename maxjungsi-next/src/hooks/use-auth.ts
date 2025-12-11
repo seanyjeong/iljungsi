@@ -57,6 +57,7 @@ export async function login(userid: string, password: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userid, password }),
+    credentials: 'include',
   });
 
   const data = await res.json();
