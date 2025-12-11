@@ -92,8 +92,8 @@ export async function POST(request: Request) {
     // HttpOnly 쿠키로 토큰 저장
     response.cookies.set('auth_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 60 * 60 * 24 * 7, // 7일
       path: '/',
     });
