@@ -26,9 +26,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // DB에서 사용자 조회
+    // DB에서 사용자 조회 (26susi DB의 원장회원 테이블)
     const user = await queryOne<DBUser>(
-      'SELECT * FROM `원장회원` WHERE `아이디` = ?',
+      'SELECT * FROM `26susi`.`원장회원` WHERE `아이디` = ?',
       [userid]
     );
 

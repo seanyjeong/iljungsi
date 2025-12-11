@@ -16,9 +16,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 아이디 중복 확인
+    // 아이디 중복 확인 (26susi DB)
     const existing = await queryOne(
-      'SELECT `아이디` FROM `원장회원` WHERE `아이디` = ?',
+      'SELECT `아이디` FROM `26susi`.`원장회원` WHERE `아이디` = ?',
       [userid]
     );
 
@@ -32,9 +32,9 @@ export async function POST(request: Request) {
     // 비밀번호 해시
     const hashedPassword = await hashPassword(password);
 
-    // 회원 등록 (승인 대기 상태)
+    // 회원 등록 (승인 대기 상태) - 26susi DB
     await query(
-      `INSERT INTO \`원장회원\` (\`아이디\`, \`비밀번호\`, \`이름\`, \`직급\`, \`지점명\`, \`전화번호\`, \`승인여부\`)
+      `INSERT INTO \`26susi\`.\`원장회원\` (\`아이디\`, \`비밀번호\`, \`이름\`, \`직급\`, \`지점명\`, \`전화번호\`, \`승인여부\`)
        VALUES (?, ?, ?, ?, ?, ?, 0)`,
       [userid, hashedPassword, name, position || '', branch, phone || '']
     );
