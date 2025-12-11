@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { query, queryOne } from '@/lib/db';
 import { signToken, comparePassword } from '@/lib/auth';
 import type { LoginRequest } from '@/types/auth';
@@ -74,8 +75,19 @@ export async function POST(request: Request) {
       role,
     });
 
-    // 응답 생성 (쿠키 설정)
-    const response = NextResponse.json({
+    // next/headers의 cookies() 사용 (Next.js 16 권장 방식)
+    const cookieStore = await cookies();
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    cookieStore.set('auth_token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7일
+      path: '/',
+    });
+
+    return NextResponse.json({
       success: true,
       token,
       user: {
@@ -88,18 +100,6 @@ export async function POST(request: Request) {
         approved: Boolean(user.승인여부),
       },
     });
-
-    // HttpOnly 쿠키로 토큰 저장
-    const isProduction = process.env.NODE_ENV === 'production';
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: isProduction, // production에서만 secure
-      sameSite: 'lax', // 같은 사이트 요청에는 lax가 적합
-      maxAge: 60 * 60 * 24 * 7, // 7일
-      path: '/',
-    });
-
-    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
