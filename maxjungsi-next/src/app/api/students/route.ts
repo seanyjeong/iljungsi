@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const params = isAdmin ? [year] : [year, user.branch];
 
     const students = await query(
-      `SELECT student_id, student_name, school_name, gender, branch_name, 학년도, account_id
+      `SELECT student_id, student_name, school_name, gender, branch_name, 학년도
        FROM \`학생기본정보\`
        WHERE 학년도 = ? ${condition}
        ORDER BY student_name`,
