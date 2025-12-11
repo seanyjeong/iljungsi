@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { serialize } from 'cookie';
 import { query, queryOne } from '@/lib/db';
 import { signToken, comparePassword } from '@/lib/auth';
 import type { LoginRequest } from '@/types/auth';
@@ -75,11 +75,9 @@ export async function POST(request: Request) {
       role,
     });
 
-    // next/headers의 cookies() 사용 (Next.js 16 권장 방식)
-    const cookieStore = await cookies();
+    // cookie 패키지로 직접 Set-Cookie 헤더 생성
     const isProduction = process.env.NODE_ENV === 'production';
-
-    cookieStore.set('auth_token', token, {
+    const cookieValue = serialize('auth_token', token, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
@@ -87,19 +85,29 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    return NextResponse.json({
-      success: true,
-      token,
-      user: {
-        userid: user.아이디,
-        name: user.이름,
-        branch: user.지점명,
-        role,
-        position: user.직급,
-        phone: user.전화번호,
-        approved: Boolean(user.승인여부),
-      },
-    });
+    // Response에 직접 Set-Cookie 헤더 추가
+    return new Response(
+      JSON.stringify({
+        success: true,
+        token,
+        user: {
+          userid: user.아이디,
+          name: user.이름,
+          branch: user.지점명,
+          role,
+          position: user.직급,
+          phone: user.전화번호,
+          approved: Boolean(user.승인여부),
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieValue,
+        },
+      }
+    );
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
