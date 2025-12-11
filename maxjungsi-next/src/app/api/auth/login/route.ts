@@ -90,10 +90,11 @@ export async function POST(request: Request) {
     });
 
     // HttpOnly 쿠키로 토큰 저장
+    const isProduction = process.env.NODE_ENV === 'production';
     response.cookies.set('auth_token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProduction, // production에서만 secure
+      sameSite: 'lax', // 같은 사이트 요청에는 lax가 적합
       maxAge: 60 * 60 * 24 * 7, // 7일
       path: '/',
     });
