@@ -459,6 +459,10 @@
         <!-- Stats Bar -->
         <div class="stats-bar" id="stats-bar" style="display: none;">
             <div class="stat-item">
+                <div class="label">모집인원</div>
+                <div class="value" id="quota-count">0명</div>
+            </div>
+            <div class="stat-item">
                 <div class="label">총 지원자</div>
                 <div class="value" id="total-applicants">0명</div>
             </div>
@@ -643,7 +647,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    displayApplicants(data.applicants, data.stats);
+                    displayApplicants(data.applicants, data.stats, data.university);
                 } else {
                     throw new Error(data.message || '데이터를 불러오는데 실패했습니다.');
                 }
@@ -685,13 +689,14 @@
             renderApplicantCards(sorted);
         }
 
-        function displayApplicants(applicants, stats) {
+        function displayApplicants(applicants, stats, university) {
             const container = document.getElementById('applicants-container');
             const statsBar = document.getElementById('stats-bar');
 
             // 전역 변수에 저장
             currentApplicants = applicants || [];
             currentStats = stats || {};
+            const quota = university?.quota || 0;
 
             if (!applicants || applicants.length === 0) {
                 statsBar.style.display = 'none';
@@ -713,6 +718,7 @@
 
             // 통계 표시
             statsBar.style.display = 'flex';
+            document.getElementById('quota-count').textContent = `${quota}명`;
             document.getElementById('total-applicants').textContent = `${stats.total_count}명`;
             document.getElementById('avg-suneung').textContent = `${avgSuneung.toFixed(2)}점`;
             document.getElementById('max-suneung').textContent = `${maxSuneung.toFixed(2)}점`;
