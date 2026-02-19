@@ -874,6 +874,93 @@
             container.innerHTML = `<div class="applicants-grid">${cardsHTML}</div>`;
         }
 
+        // ========== 스타일 정의 ==========
+        const STYLES = {
+            headerBlue: {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                fill: { fgColor: { rgb: '2563EB' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: '1E40AF' } }, bottom: { style: 'thin', color: { rgb: '1E40AF' } }, left: { style: 'thin', color: { rgb: '1E40AF' } }, right: { style: 'thin', color: { rgb: '1E40AF' } } }
+            },
+            headerOrange: {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                fill: { fgColor: { rgb: 'D97706' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: '92400E' } }, bottom: { style: 'thin', color: { rgb: '92400E' } }, left: { style: 'thin', color: { rgb: '92400E' } }, right: { style: 'thin', color: { rgb: '92400E' } } }
+            },
+            tocHeader: {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 12 },
+                fill: { fgColor: { rgb: '1E293B' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: '0F172A' } }, bottom: { style: 'thin', color: { rgb: '0F172A' } }, left: { style: 'thin', color: { rgb: '0F172A' } }, right: { style: 'thin', color: { rgb: '0F172A' } } }
+            },
+            tocRow: {
+                font: { sz: 11 },
+                alignment: { vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'E2E8F0' } }, bottom: { style: 'thin', color: { rgb: 'E2E8F0' } }, left: { style: 'thin', color: { rgb: 'E2E8F0' } }, right: { style: 'thin', color: { rgb: 'E2E8F0' } } }
+            },
+            tocLink: {
+                font: { sz: 11, color: { rgb: '2563EB' }, underline: true },
+                alignment: { vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'E2E8F0' } }, bottom: { style: 'thin', color: { rgb: 'E2E8F0' } }, left: { style: 'thin', color: { rgb: 'E2E8F0' } }, right: { style: 'thin', color: { rgb: 'E2E8F0' } } }
+            },
+            tocCenter: {
+                font: { sz: 11 },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'E2E8F0' } }, bottom: { style: 'thin', color: { rgb: 'E2E8F0' } }, left: { style: 'thin', color: { rgb: 'E2E8F0' } }, right: { style: 'thin', color: { rgb: 'E2E8F0' } } }
+            },
+            titleCell: {
+                font: { bold: true, sz: 14, color: { rgb: '1E293B' } },
+                alignment: { vertical: 'center' }
+            },
+            homeLink: {
+                font: { bold: true, sz: 11, color: { rgb: '2563EB' }, underline: true },
+                alignment: { horizontal: 'right', vertical: 'center' }
+            },
+            cell: {
+                font: { sz: 10 },
+                alignment: { vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } }
+            },
+            cellCenter: {
+                font: { sz: 10 },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } }
+            },
+            cellNumber: {
+                font: { sz: 10, bold: true },
+                alignment: { horizontal: 'right', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } },
+                numFmt: '0.00'
+            },
+            cellPractical: {
+                font: { sz: 10 },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } },
+                fill: { fgColor: { rgb: 'FFFBEB' } }
+            },
+            rankCell: {
+                font: { sz: 10, bold: true },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } },
+                fill: { fgColor: { rgb: 'EEF2FF' } }
+            }
+        };
+
+        // 시트명 안전하게 만들기 (엑셀 31자 제한, 특수문자 제거)
+        function safeSheetName(name, usedNames) {
+            let safe = name.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31);
+            if (!safe) safe = 'Sheet';
+            let finalName = safe;
+            let counter = 2;
+            while (usedNames.has(finalName)) {
+                finalName = safe.substring(0, 28) + `(${counter})`;
+                counter++;
+            }
+            usedNames.add(finalName);
+            return finalName;
+        }
+
         // ========== 전체 엑셀 다운로드 ==========
         async function downloadAllExcel() {
             const token = getToken();
@@ -906,9 +993,8 @@
                 const totalCount = allSchools.length;
                 progressText.textContent = `총 ${totalCount}개 대학 데이터 수집 중...`;
 
-                // 2) 각 대학별로 지원자 데이터 수집 (1차: raw 데이터)
-                const rawRows = [];
-                let maxPracticalCount = 0;
+                // 2) 각 대학별 지원자 데이터 수집
+                const universityData = []; // { school, applicants[], practicalCount }
                 let completed = 0;
 
                 for (const school of allSchools) {
@@ -919,25 +1005,23 @@
 
                         if (appRes.ok) {
                             const appData = await appRes.json();
-                            if (appData.success && Array.isArray(appData.applicants)) {
-                                appData.applicants.forEach((a) => {
-                                    // 실기 기록을 배열로 변환
+                            if (appData.success && Array.isArray(appData.applicants) && appData.applicants.length > 0) {
+                                let maxP = 0;
+                                const applicants = appData.applicants.map((a, idx) => {
                                     const practicals = [];
                                     if (a.practical_records && typeof a.practical_records === 'object') {
                                         for (const [종목, 기록] of Object.entries(a.practical_records)) {
                                             practicals.push({ 종목, 기록 });
                                         }
                                     }
-                                    if (practicals.length > maxPracticalCount) {
-                                        maxPracticalCount = practicals.length;
-                                    }
-
-                                    rawRows.push({ school, a, practicals });
+                                    if (practicals.length > maxP) maxP = practicals.length;
+                                    return { ...a, _practicals: practicals, _rank: idx + 1 };
                                 });
+                                universityData.push({ school, applicants, practicalCount: maxP, quota: appData.university?.quota || 0 });
                             }
                         }
                     } catch (e) {
-                        console.warn(`${school.university} ${school.department} 데이터 수집 실패:`, e);
+                        console.warn(`${school.university} ${school.department} 수집 실패:`, e);
                     }
 
                     completed++;
@@ -946,178 +1030,216 @@
                     progressText.textContent = `${completed}/${totalCount} 대학 완료 (${pct}%)`;
                 }
 
-                if (rawRows.length === 0) {
+                if (universityData.length === 0) {
                     alert('다운로드할 지원자 데이터가 없습니다.');
                     overlay.classList.remove('show');
                     btn.disabled = false;
                     return;
                 }
 
-                // 3) 실기 종목 수에 맞춰 최종 행 구성
+                // 3) 엑셀 워크북 생성
                 progressText.textContent = '엑셀 파일 생성 중...';
                 barFill.style.width = '100%';
 
-                const allRows = rawRows.map(({ school, a, practicals }) => {
-                    const row = {
-                        '모집군': school.gun || '',
-                        '대학': school.university || '',
-                        '학과': school.department || '',
-                        '이름': a.name || '',
-                        '지점': a.branch || '',
-                        '출신고교': a.school_name || '',
-                        '국어_표준': a.korean_standard || '',
-                        '국어_백분위': a.korean_percentile || '',
-                        '국어_등급': a.korean_grade || '',
-                        '수학_표준': a.math_standard || '',
-                        '수학_백분위': a.math_percentile || '',
-                        '수학_등급': a.math_grade || '',
-                        '영어_등급': a.english_grade || '',
-                        '탐구1_표준': a.inquiry1_standard || '',
-                        '탐구1_백분위': a.inquiry1_percentile || '',
-                        '탐구1_등급': a.inquiry1_grade || '',
-                        '탐구2_표준': a.inquiry2_standard || '',
-                        '탐구2_백분위': a.inquiry2_percentile || '',
-                        '탐구2_등급': a.inquiry2_grade || '',
-                        '수능점수': a.suneung_score ? Number(a.suneung_score.toFixed(2)) : '',
-                        '내신점수': a.naeshin_score ? Number(a.naeshin_score.toFixed(2)) : '',
-                        '실기점수': a.practical_score ? Number(a.practical_score.toFixed(2)) : '',
-                    };
+                const wb = XLSX.utils.book_new();
+                const usedSheetNames = new Set();
 
-                    // 실기 종목/기록 동적 컬럼
-                    for (let i = 0; i < maxPracticalCount; i++) {
-                        row[`종목${i + 1}`] = practicals[i]?.종목 || '';
-                        row[`기록${i + 1}`] = practicals[i]?.기록 || '';
-                    }
+                // 군별 정렬
+                const gunOrder = { '가': 1, '나': 2, '다': 3 };
+                universityData.sort((a, b) => (gunOrder[a.school.gun] || 9) - (gunOrder[b.school.gun] || 9));
 
-                    row['총점'] = a.total_score ? Number(a.total_score.toFixed(2)) : '';
-                    row['1단계결과'] = a.result_1st || '';
-                    row['최초결과'] = a.result_first || '';
-                    row['최종결과'] = a.result_final || '';
-                    row['등록여부'] = (a.registered === 'Y' || a.registered === true) ? 'Y' : '';
-
-                    return row;
+                // 시트명 미리 생성
+                const sheetInfos = universityData.map(ud => {
+                    const rawName = `${ud.school.university}-${ud.school.department}`;
+                    const sheetName = safeSheetName(rawName, usedSheetNames);
+                    return { ...ud, sheetName };
                 });
 
-                // 4) 엑셀 생성 (스타일 적용)
-                const headers = Object.keys(allRows[0]);
-                const ws = XLSX.utils.json_to_sheet(allRows);
+                // ===== 목차 시트 =====
+                const tocHeaders = ['No', '모집군', '대학', '학과', '지원자수', '바로가기'];
+                const tocData = [tocHeaders];
+                sheetInfos.forEach((info, idx) => {
+                    tocData.push([
+                        idx + 1,
+                        info.school.gun || '',
+                        info.school.university || '',
+                        info.school.department || '',
+                        info.applicants.length,
+                        info.sheetName
+                    ]);
+                });
 
-                // 헤더 스타일
-                const headerStyle = {
-                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-                    fill: { fgColor: { rgb: '2563EB' } },
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: {
-                        top: { style: 'thin', color: { rgb: '1E40AF' } },
-                        bottom: { style: 'thin', color: { rgb: '1E40AF' } },
-                        left: { style: 'thin', color: { rgb: '1E40AF' } },
-                        right: { style: 'thin', color: { rgb: '1E40AF' } }
-                    }
-                };
+                const tocWs = XLSX.utils.aoa_to_sheet(tocData);
 
-                // 실기 종목 헤더는 주황색으로 구분
-                const practicalHeaderStyle = {
-                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-                    fill: { fgColor: { rgb: 'D97706' } },
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: {
-                        top: { style: 'thin', color: { rgb: '92400E' } },
-                        bottom: { style: 'thin', color: { rgb: '92400E' } },
-                        left: { style: 'thin', color: { rgb: '92400E' } },
-                        right: { style: 'thin', color: { rgb: '92400E' } }
-                    }
-                };
-
-                // 데이터 셀 스타일
-                const cellBorder = {
-                    top: { style: 'thin', color: { rgb: 'D1D5DB' } },
-                    bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
-                    left: { style: 'thin', color: { rgb: 'D1D5DB' } },
-                    right: { style: 'thin', color: { rgb: 'D1D5DB' } }
-                };
-
-                const cellStyle = {
-                    font: { sz: 10 },
-                    alignment: { vertical: 'center' },
-                    border: cellBorder
-                };
-
-                const cellStyleCenter = {
-                    font: { sz: 10 },
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: cellBorder
-                };
-
-                const cellStyleNumber = {
-                    font: { sz: 10, bold: true },
-                    alignment: { horizontal: 'right', vertical: 'center' },
-                    border: cellBorder,
-                    numFmt: '0.00'
-                };
-
-                const cellStylePractical = {
-                    font: { sz: 10 },
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: cellBorder,
-                    fill: { fgColor: { rgb: 'FFFBEB' } }
-                };
-
-                // 컬럼 분류
-                const numberCols = new Set(['수능점수', '내신점수', '실기점수', '총점']);
-                const centerCols = new Set(['모집군', '국어_등급', '수학_등급', '영어_등급', '탐구1_등급', '탐구2_등급', '1단계결과', '최초결과', '최종결과', '등록여부']);
-                const practicalCols = new Set();
-                for (let i = 1; i <= maxPracticalCount; i++) {
-                    practicalCols.add(`종목${i}`);
-                    practicalCols.add(`기록${i}`);
-                }
-
-                // 헤더 행 스타일 적용
-                for (let c = 0; c < headers.length; c++) {
+                // 목차 헤더 스타일
+                for (let c = 0; c < tocHeaders.length; c++) {
                     const addr = XLSX.utils.encode_cell({ r: 0, c });
-                    if (!ws[addr]) continue;
-                    ws[addr].s = practicalCols.has(headers[c]) ? practicalHeaderStyle : headerStyle;
+                    if (tocWs[addr]) tocWs[addr].s = STYLES.tocHeader;
                 }
 
-                // 데이터 행 스타일 적용
-                for (let r = 1; r <= allRows.length; r++) {
-                    for (let c = 0; c < headers.length; c++) {
+                // 목차 데이터 스타일 + 바로가기 링크
+                for (let r = 1; r < tocData.length; r++) {
+                    for (let c = 0; c < tocHeaders.length; c++) {
                         const addr = XLSX.utils.encode_cell({ r, c });
-                        if (!ws[addr]) continue;
-                        const colName = headers[c];
-                        if (numberCols.has(colName)) {
-                            ws[addr].s = cellStyleNumber;
-                        } else if (practicalCols.has(colName)) {
-                            ws[addr].s = cellStylePractical;
-                        } else if (centerCols.has(colName)) {
-                            ws[addr].s = cellStyleCenter;
+                        if (!tocWs[addr]) continue;
+
+                        if (c === 5) {
+                            // 바로가기 컬럼 → 하이퍼링크
+                            const targetSheet = tocData[r][5];
+                            tocWs[addr].l = { Target: `#'${targetSheet}'!A1` };
+                            tocWs[addr].v = '이동 →';
+                            tocWs[addr].s = STYLES.tocLink;
+                        } else if (c === 0 || c === 1 || c === 4) {
+                            tocWs[addr].s = STYLES.tocCenter;
                         } else {
-                            ws[addr].s = cellStyle;
+                            tocWs[addr].s = STYLES.tocRow;
                         }
                     }
                 }
 
-                // 컬럼 너비 설정
-                ws['!cols'] = headers.map(key => {
-                    const maxLen = Math.max(
-                        key.length * 1.5,
-                        ...allRows.slice(0, 100).map(r => String(r[key] ?? '').length)
-                    );
-                    return { wch: Math.min(Math.max(maxLen + 2, 8), 35) };
-                });
+                tocWs['!cols'] = [
+                    { wch: 6 },  // No
+                    { wch: 8 },  // 모집군
+                    { wch: 20 }, // 대학
+                    { wch: 25 }, // 학과
+                    { wch: 10 }, // 지원자수
+                    { wch: 10 }, // 바로가기
+                ];
+                tocWs['!rows'] = [{ hpt: 30 }];
 
-                // 행 높이 (헤더)
-                ws['!rows'] = [{ hpt: 28 }];
+                XLSX.utils.book_append_sheet(wb, tocWs, '목차');
 
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, '실제지원현황');
+                // ===== 대학별 시트 =====
+                const numberCols = new Set(['수능점수', '내신점수', '실기점수', '총점']);
+                const centerCols = new Set(['순위', '국어_등급', '수학_등급', '영어_등급', '탐구1_등급', '탐구2_등급', '1단계결과', '최초결과', '최종결과', '등록여부']);
 
-                const fileName = `실제지원현황_전체_${year}학년도_${new Date().toISOString().slice(0,10)}.xlsx`;
+                for (const info of sheetInfos) {
+                    const { school, applicants, practicalCount, sheetName, quota } = info;
+
+                    // 실기 컬럼 Set
+                    const practicalCols = new Set();
+                    for (let i = 1; i <= practicalCount; i++) {
+                        practicalCols.add(`종목${i}`);
+                        practicalCols.add(`기록${i}`);
+                    }
+
+                    // 시트 데이터 구성: 1행 타이틀 + 2행 홈링크 + 3행 빈줄 + 4행 헤더 + 데이터
+                    const rows = applicants.map(a => {
+                        const row = {
+                            '순위': a._rank,
+                            '이름': a.name || '',
+                            '지점': a.branch || '',
+                            '출신고교': a.school_name || '',
+                            '국어_표준': a.korean_standard || '',
+                            '국어_백분위': a.korean_percentile || '',
+                            '국어_등급': a.korean_grade || '',
+                            '수학_표준': a.math_standard || '',
+                            '수학_백분위': a.math_percentile || '',
+                            '수학_등급': a.math_grade || '',
+                            '영어_등급': a.english_grade || '',
+                            '탐구1_표준': a.inquiry1_standard || '',
+                            '탐구1_백분위': a.inquiry1_percentile || '',
+                            '탐구1_등급': a.inquiry1_grade || '',
+                            '탐구2_표준': a.inquiry2_standard || '',
+                            '탐구2_백분위': a.inquiry2_percentile || '',
+                            '탐구2_등급': a.inquiry2_grade || '',
+                            '수능점수': a.suneung_score ? Number(a.suneung_score.toFixed(2)) : '',
+                            '내신점수': a.naeshin_score ? Number(a.naeshin_score.toFixed(2)) : '',
+                            '실기점수': a.practical_score ? Number(a.practical_score.toFixed(2)) : '',
+                        };
+                        for (let i = 0; i < practicalCount; i++) {
+                            row[`종목${i + 1}`] = a._practicals[i]?.종목 || '';
+                            row[`기록${i + 1}`] = a._practicals[i]?.기록 || '';
+                        }
+                        row['총점'] = a.total_score ? Number(a.total_score.toFixed(2)) : '';
+                        row['1단계결과'] = a.result_1st || '';
+                        row['최초결과'] = a.result_first || '';
+                        row['최종결과'] = a.result_final || '';
+                        row['등록여부'] = (a.registered === 'Y' || a.registered === true) ? 'Y' : '';
+                        return row;
+                    });
+
+                    const headers = Object.keys(rows[0]);
+
+                    // AOA 구성: 타이틀(0행) → 홈링크(1행) → 빈줄(2행) → 헤더(3행) → 데이터(4행~)
+                    const aoa = [];
+                    // 0행: 타이틀
+                    const titleRow = [`${school.gun}군 | ${school.university} - ${school.department} (지원자 ${applicants.length}명)`];
+                    aoa.push(titleRow);
+                    // 1행: 홈링크
+                    aoa.push(['← 목차로 돌아가기']);
+                    // 2행: 빈줄
+                    aoa.push([]);
+                    // 3행: 헤더
+                    aoa.push(headers);
+                    // 4행~: 데이터
+                    for (const row of rows) {
+                        aoa.push(headers.map(h => row[h]));
+                    }
+
+                    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                    // 타이틀 스타일
+                    const titleAddr = XLSX.utils.encode_cell({ r: 0, c: 0 });
+                    if (ws[titleAddr]) ws[titleAddr].s = STYLES.titleCell;
+
+                    // 홈 링크
+                    const homeAddr = XLSX.utils.encode_cell({ r: 1, c: 0 });
+                    if (ws[homeAddr]) {
+                        ws[homeAddr].l = { Target: "#'목차'!A1" };
+                        ws[homeAddr].s = STYLES.homeLink;
+                    }
+
+                    // 헤더 스타일 (3행)
+                    for (let c = 0; c < headers.length; c++) {
+                        const addr = XLSX.utils.encode_cell({ r: 3, c });
+                        if (!ws[addr]) continue;
+                        ws[addr].s = practicalCols.has(headers[c]) ? STYLES.headerOrange : STYLES.headerBlue;
+                    }
+
+                    // 데이터 스타일 (4행~)
+                    for (let r = 4; r < 4 + rows.length; r++) {
+                        for (let c = 0; c < headers.length; c++) {
+                            const addr = XLSX.utils.encode_cell({ r, c });
+                            if (!ws[addr]) continue;
+                            const colName = headers[c];
+                            if (colName === '순위') {
+                                ws[addr].s = STYLES.rankCell;
+                            } else if (numberCols.has(colName)) {
+                                ws[addr].s = STYLES.cellNumber;
+                            } else if (practicalCols.has(colName)) {
+                                ws[addr].s = STYLES.cellPractical;
+                            } else if (centerCols.has(colName)) {
+                                ws[addr].s = STYLES.cellCenter;
+                            } else {
+                                ws[addr].s = STYLES.cell;
+                            }
+                        }
+                    }
+
+                    // 컬럼 너비
+                    ws['!cols'] = headers.map(key => {
+                        const maxLen = Math.max(
+                            key.length * 1.5,
+                            ...rows.slice(0, 50).map(r => String(r[key] ?? '').length)
+                        );
+                        return { wch: Math.min(Math.max(maxLen + 2, 8), 35) };
+                    });
+
+                    // 행 높이
+                    ws['!rows'] = [{ hpt: 32 }, { hpt: 24 }, { hpt: 10 }, { hpt: 28 }];
+
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                }
+
+                // 4) 다운로드
+                const fileName = `실제지원현황_${year}학년도_${new Date().toISOString().slice(0,10)}.xlsx`;
                 XLSX.writeFile(wb, fileName);
 
-                progressText.textContent = `완료! ${allRows.length}건 다운로드됨`;
+                progressText.textContent = `완료! ${sheetInfos.length}개 대학, ${universityData.reduce((s, u) => s + u.applicants.length, 0)}명 다운로드됨`;
                 setTimeout(() => {
                     overlay.classList.remove('show');
-                }, 1500);
+                }, 2000);
 
             } catch (error) {
                 console.error('엑셀 다운로드 실패:', error);
