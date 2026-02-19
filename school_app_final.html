@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>학교별 실제지원 현황</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -415,6 +416,72 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Excel Download Button */
+        .btn-excel {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-excel:hover {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+        .btn-excel:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Progress overlay */
+        .progress-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .progress-overlay.show { display: flex; }
+        .progress-box {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 16px;
+            text-align: center;
+            min-width: 320px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .progress-box h3 { margin: 0 0 16px 0; color: var(--text-primary); }
+        .progress-bar-wrap {
+            background: #e5e7eb;
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #059669, #10b981);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 8px;
+        }
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .applicants-grid {
@@ -475,6 +542,9 @@
                         <option value="">먼저 모집군을 선택하세요</option>
                     </select>
                 </div>
+                <button class="btn-excel" id="btn-download-all" onclick="downloadAllExcel()">
+                    <i class="fas fa-file-excel"></i> 전체 엑셀 다운로드
+                </button>
             </div>
         </div>
 
@@ -497,6 +567,17 @@
                 <h3>모집군을 선택해주세요</h3>
                 <p>먼저 모집군을 선택한 후 대학을 선택하면 해당 학교 실제지원자 목록을 확인할 수 있습니다.</p>
             </div>
+        </div>
+    </div>
+
+    <!-- Progress Overlay -->
+    <div class="progress-overlay" id="progress-overlay">
+        <div class="progress-box">
+            <h3><i class="fas fa-file-excel" style="color:#059669"></i> 엑셀 생성 중...</h3>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">준비 중...</div>
         </div>
     </div>
 
@@ -791,6 +872,152 @@
             }).join('');
 
             container.innerHTML = `<div class="applicants-grid">${cardsHTML}</div>`;
+        }
+
+        // ========== 전체 엑셀 다운로드 ==========
+        async function downloadAllExcel() {
+            const token = getToken();
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            const year = document.getElementById('year-select').value;
+            const btn = document.getElementById('btn-download-all');
+            const overlay = document.getElementById('progress-overlay');
+            const barFill = document.getElementById('progress-bar-fill');
+            const progressText = document.getElementById('progress-text');
+
+            btn.disabled = true;
+            overlay.classList.add('show');
+            barFill.style.width = '0%';
+            progressText.textContent = '대학 목록 불러오는 중...';
+
+            try {
+                // 1) 전체 대학 목록 가져오기
+                const res = await fetch(`${SVR_JUNGSI}/jungsi/schools/${year}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('대학 목록 로드 실패');
+                const data = await res.json();
+                if (!data.success || !Array.isArray(data.list)) throw new Error('대학 목록 데이터 오류');
+
+                const allSchools = data.list;
+                const totalCount = allSchools.length;
+                progressText.textContent = `총 ${totalCount}개 대학 데이터 수집 중...`;
+
+                // 2) 각 대학별로 지원자 데이터 수집
+                const allRows = [];
+                let completed = 0;
+
+                for (const school of allSchools) {
+                    try {
+                        const appRes = await fetch(`${SVR_JUNGSI}/jungsi/university-final-applicants/${school.U_ID}/${year}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (appRes.ok) {
+                            const appData = await appRes.json();
+                            if (appData.success && Array.isArray(appData.applicants)) {
+                                const quota = appData.university?.quota || 0;
+                                const applicantCount = appData.applicants.length;
+
+                                appData.applicants.forEach((a, idx) => {
+                                    // 실기 기록 텍스트
+                                    let practicalText = '';
+                                    if (a.practical_records && typeof a.practical_records === 'object') {
+                                        practicalText = Object.entries(a.practical_records)
+                                            .map(([종목, 기록]) => `${종목} ${기록}`)
+                                            .join(', ');
+                                    }
+
+                                    allRows.push({
+                                        '모집군': school.gun || '',
+                                        '대학': school.university || '',
+                                        '학과': school.department || '',
+                                        '모집인원': quota,
+                                        '총지원자': applicantCount,
+                                        '순위': idx + 1,
+                                        '이름': a.name || '',
+                                        '지점': a.branch || '',
+                                        '출신고교': a.school_name || '',
+                                        '국어_표준': a.korean_standard || '',
+                                        '국어_백분위': a.korean_percentile || '',
+                                        '국어_등급': a.korean_grade || '',
+                                        '수학_표준': a.math_standard || '',
+                                        '수학_백분위': a.math_percentile || '',
+                                        '수학_등급': a.math_grade || '',
+                                        '영어_등급': a.english_grade || '',
+                                        '탐구1_표준': a.inquiry1_standard || '',
+                                        '탐구1_백분위': a.inquiry1_percentile || '',
+                                        '탐구1_등급': a.inquiry1_grade || '',
+                                        '탐구2_표준': a.inquiry2_standard || '',
+                                        '탐구2_백분위': a.inquiry2_percentile || '',
+                                        '탐구2_등급': a.inquiry2_grade || '',
+                                        '수능점수': a.suneung_score ? a.suneung_score.toFixed(2) : '',
+                                        '내신점수': a.naeshin_score ? a.naeshin_score.toFixed(2) : '',
+                                        '실기점수': a.practical_score ? a.practical_score.toFixed(2) : '',
+                                        '실기기록': practicalText,
+                                        '총점': a.total_score ? a.total_score.toFixed(2) : '',
+                                        '1단계결과': a.result_1st || '',
+                                        '최초결과': a.result_first || '',
+                                        '최종결과': a.result_final || '',
+                                        '등록여부': a.registered === 'Y' || a.registered === true ? 'Y' : ''
+                                    });
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`${school.university} ${school.department} 데이터 수집 실패:`, e);
+                    }
+
+                    completed++;
+                    const pct = Math.round((completed / totalCount) * 100);
+                    barFill.style.width = pct + '%';
+                    progressText.textContent = `${completed}/${totalCount} 대학 완료 (${pct}%)`;
+                }
+
+                if (allRows.length === 0) {
+                    alert('다운로드할 지원자 데이터가 없습니다.');
+                    overlay.classList.remove('show');
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 3) 엑셀 생성 및 다운로드
+                progressText.textContent = '엑셀 파일 생성 중...';
+                barFill.style.width = '100%';
+
+                const ws = XLSX.utils.json_to_sheet(allRows);
+
+                // 컬럼 너비 자동 조정
+                const colWidths = Object.keys(allRows[0]).map(key => {
+                    const maxLen = Math.max(
+                        key.length,
+                        ...allRows.map(r => String(r[key]).length)
+                    );
+                    return { wch: Math.min(maxLen + 2, 30) };
+                });
+                ws['!cols'] = colWidths;
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '실제지원현황');
+
+                const fileName = `실제지원현황_전체_${year}학년도_${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+                progressText.textContent = `완료! ${allRows.length}건 다운로드됨`;
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                }, 1500);
+
+            } catch (error) {
+                console.error('엑셀 다운로드 실패:', error);
+                alert('엑셀 다운로드 중 오류가 발생했습니다: ' + error.message);
+                overlay.classList.remove('show');
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         // 초기화
