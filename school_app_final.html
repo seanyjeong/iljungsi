@@ -1366,10 +1366,13 @@
                     XLSX.utils.book_append_sheet(wb, ws, sheetName);
                 }
 
-                // ===== 합격자 명단 시트 (대학별 테이블) =====
+                // ===== 합격자 명단 시트 (가/나/다 가로 배치, 색상 없음) =====
                 const passSheetName = '합격자 명단';
                 const passWs = {};
                 const passRef = { r: 0, c: 0 };
+                const passCols = 6; // No, 지점, 이름, 성별, 최초합, 최종합
+                const passGapCols = 1;
+                const passBlock = passCols + passGapCols; // 7
 
                 function passSetCell(r, c, val, style, link) {
                     const addr = XLSX.utils.encode_cell({ r, c });
@@ -1380,26 +1383,23 @@
                     if (c > passRef.c) passRef.c = c;
                 }
 
-                // 공통 border
                 const pBorder = { top: { style: 'thin', color: { rgb: 'D1D5DB' } }, bottom: { style: 'thin', color: { rgb: 'D1D5DB' } }, left: { style: 'thin', color: { rgb: 'D1D5DB' } }, right: { style: 'thin', color: { rgb: 'D1D5DB' } } };
-                const pBorderGreen = { top: { style: 'thin', color: { rgb: 'BBF7D0' } }, bottom: { style: 'thin', color: { rgb: 'BBF7D0' } }, left: { style: 'thin', color: { rgb: 'BBF7D0' } }, right: { style: 'thin', color: { rgb: 'BBF7D0' } } };
 
-                // 0행: 타이틀
+                // 0행: 타이틀, 1행: 목차링크
                 passSetCell(0, 0, `${year}학년도 합격자 명단`, {
                     font: { bold: true, sz: 16, color: { rgb: '14532D' } },
                     alignment: { vertical: 'center' }
                 });
-                // 1행: 목차 링크
                 passSetCell(1, 0, '← 목차로 돌아가기', STYLES.homeLink, { Target: "#'목차'!A1" });
 
                 // 군별 합격 데이터 수집
+                const gunPassData = {};
                 let totalPassCount = 0;
-                let passRow = 3;
+                const passMerges = [];
 
                 for (const gun of gunList) {
+                    gunPassData[gun] = [];
                     const gunInfos = sheetInfos.filter(s => s.school.gun === gun);
-                    const gunPassList = [];
-
                     for (const info of gunInfos) {
                         const passStudents = info.applicants.filter(a => {
                             const f = a.result_final || '';
@@ -1407,129 +1407,113 @@
                             return f === '최종합' || f === '합격' || fi === '최초합' || fi === '합격';
                         });
                         if (passStudents.length > 0) {
-                            gunPassList.push({ info, passStudents });
+                            gunPassData[gun].push({ info, passStudents });
+                            totalPassCount += passStudents.length;
                         }
                     }
+                }
 
-                    if (gunPassList.length === 0) continue;
+                const passStartRow = 3;
 
-                    const gunTotal = gunPassList.reduce((s, g) => s + g.passStudents.length, 0);
+                gunList.forEach((gun, gi) => {
+                    const colStart = gi * passBlock;
                     const color = gunColors[gun];
+                    const group = gunPassData[gun];
+                    const gunTotal = group.reduce((s, g) => s + g.passStudents.length, 0);
 
-                    // ── 군 대 타이틀 ──
-                    const gunStyle = {
-                        font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 14 },
+                    // 군 타이틀 (셀병합)
+                    const gunTitleStyle = {
+                        font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 },
                         fill: { fgColor: { rgb: color } },
-                        alignment: { vertical: 'center' },
-                        border: { bottom: { style: 'medium', color: { rgb: color } } }
+                        alignment: { horizontal: 'center', vertical: 'center' }
                     };
-                    for (let c = 0; c <= 5; c++) passSetCell(passRow, c, '', gunStyle);
-                    passSetCell(passRow, 0, `  ${gun}군  ━━  합격 ${gunTotal}명`, gunStyle);
-                    passRow += 2; // 군 타이틀 + 빈줄
+                    passSetCell(passStartRow, colStart, `${gun}군  (${gunTotal}명)`, gunTitleStyle);
+                    for (let c = 1; c < passCols; c++) passSetCell(passStartRow, colStart + c, '', gunTitleStyle);
+                    passMerges.push({ s: { r: passStartRow, c: colStart }, e: { r: passStartRow, c: colStart + passCols - 1 } });
 
-                    for (const { info, passStudents } of gunPassList) {
-                        // ── 대학 헤더 (예: 가천대학교  ▸  체육전공    (17명 합격)) ──
-                        const uniTitle = `${info.school.university}  ▸  ${info.school.department}    (${passStudents.length}명 합격)`;
-                        const uniHeaderStyle = {
-                            font: { bold: true, sz: 12, color: { rgb: '1E293B' } },
+                    let curRow = passStartRow + 1;
+
+                    for (const { info, passStudents } of group) {
+                        // 대학 헤더 (셀병합)
+                        const uniTitle = `${info.school.university}  ▸  ${info.school.department}    (${passStudents.length}명)`;
+                        const uniStyle = {
+                            font: { bold: true, sz: 11, color: { rgb: '1E293B' } },
                             fill: { fgColor: { rgb: 'F1F5F9' } },
                             alignment: { vertical: 'center' },
-                            border: { bottom: { style: 'medium', color: { rgb: color } }, top: { style: 'medium', color: { rgb: color } } }
+                            border: { top: { style: 'medium', color: { rgb: color } }, bottom: { style: 'thin', color: { rgb: 'CBD5E1' } } }
                         };
-                        for (let c = 0; c <= 5; c++) passSetCell(passRow, c, '', uniHeaderStyle);
-                        passSetCell(passRow, 0, uniTitle, uniHeaderStyle);
-                        // 상세 시트 링크
-                        passSetCell(passRow, 5, '상세 →', {
-                            font: { bold: true, sz: 10, color: { rgb: color }, underline: true },
+                        passSetCell(curRow, colStart, uniTitle, uniStyle);
+                        for (let c = 1; c < passCols - 1; c++) passSetCell(curRow, colStart + c, '', uniStyle);
+                        passMerges.push({ s: { r: curRow, c: colStart }, e: { r: curRow, c: colStart + passCols - 2 } });
+                        // 상세 링크
+                        passSetCell(curRow, colStart + passCols - 1, '상세→', {
+                            font: { sz: 9, color: { rgb: color }, underline: true, bold: true },
                             fill: { fgColor: { rgb: 'F1F5F9' } },
                             alignment: { horizontal: 'center', vertical: 'center' },
-                            border: { bottom: { style: 'medium', color: { rgb: color } }, top: { style: 'medium', color: { rgb: color } } }
+                            border: { top: { style: 'medium', color: { rgb: color } }, bottom: { style: 'thin', color: { rgb: 'CBD5E1' } } }
                         }, { Target: `#'${info.sheetName}'!A1` });
-                        passRow++;
+                        curRow++;
 
-                        // ── 컬럼 헤더 ──
-                        const colHeaders = ['No.', '지점', '이름', '성별', '최초합', '최종합'];
-                        const colHeaderStyle = {
-                            font: { bold: true, sz: 10, color: { rgb: '475569' } },
+                        // 컬럼 헤더
+                        const colHeaders = ['No.', '지점', '이름', '성별', '최초', '최종'];
+                        const hStyle = {
+                            font: { bold: true, sz: 9, color: { rgb: '64748B' } },
                             fill: { fgColor: { rgb: 'E2E8F0' } },
                             alignment: { horizontal: 'center', vertical: 'center' },
                             border: pBorder
                         };
-                        colHeaders.forEach((h, ci) => passSetCell(passRow, ci, h, colHeaderStyle));
-                        passRow++;
+                        colHeaders.forEach((h, ci) => passSetCell(curRow, colStart + ci, h, hStyle));
+                        curRow++;
 
-                        // ── 학생 행 ──
+                        // 학생 데이터 (색상 없이 깔끔하게)
                         passStudents.forEach((a, idx) => {
-                            const fVal = a.result_final || '';
-                            const fiVal = a.result_first || '';
-                            const isFinalPass = fVal === '최종합' || fVal === '합격';
-                            const isFirstPass = fiVal === '최초합' || fiVal === '합격';
-                            const rowBg = isFinalPass ? 'DCFCE7' : (isFirstPass ? 'F0FDF4' : 'FFFFFF');
-                            const gender = a.gender || a.sex || a.성별 || '';
+                            const fVal = a.result_final || '-';
+                            const fiVal = a.result_first || '-';
+                            const gender = a.gender || '';
 
-                            const baseStyle = (align = 'center') => ({
-                                font: { sz: 10 },
-                                fill: { fgColor: { rgb: rowBg } },
-                                alignment: { horizontal: align, vertical: 'center' },
-                                border: isFinalPass || isFirstPass ? pBorderGreen : pBorder
-                            });
+                            const cs = { font: { sz: 10 }, alignment: { horizontal: 'center', vertical: 'center' }, border: pBorder };
+                            const csName = { font: { sz: 10, bold: true }, alignment: { horizontal: 'center', vertical: 'center' }, border: pBorder };
+                            const csNo = { font: { sz: 9, color: { rgb: '94A3B8' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: pBorder };
+                            const csPass = (val) => {
+                                const isPass = val === '최종합' || val === '합격' || val === '최초합';
+                                return { font: { sz: 10, bold: isPass, color: { rgb: isPass ? '16A34A' : '94A3B8' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: pBorder };
+                            };
 
-                            // No.
-                            passSetCell(passRow, 0, idx + 1, { ...baseStyle(), font: { sz: 10, color: { rgb: '94A3B8' } } });
-                            // 지점
-                            passSetCell(passRow, 1, a.branch || '', baseStyle());
-                            // 이름
-                            passSetCell(passRow, 2, a.name || '', {
-                                font: { sz: 11, bold: true, color: { rgb: isFinalPass ? '14532D' : '1E293B' } },
-                                fill: { fgColor: { rgb: rowBg } },
-                                alignment: { horizontal: 'center', vertical: 'center' },
-                                border: isFinalPass || isFirstPass ? pBorderGreen : pBorder
-                            });
-                            // 성별
-                            passSetCell(passRow, 3, gender, baseStyle());
-                            // 최초합
-                            const firstDisplay = fiVal || '-';
-                            const firstIsPass = fiVal === '최초합' || fiVal === '합격';
-                            passSetCell(passRow, 4, firstDisplay, {
-                                font: { sz: 10, bold: firstIsPass, color: { rgb: firstIsPass ? '16A34A' : '94A3B8' } },
-                                fill: { fgColor: { rgb: rowBg } },
-                                alignment: { horizontal: 'center', vertical: 'center' },
-                                border: isFinalPass || isFirstPass ? pBorderGreen : pBorder
-                            });
-                            // 최종합
-                            const finalDisplay = fVal || '-';
-                            const finalIsPass = fVal === '최종합' || fVal === '합격';
-                            passSetCell(passRow, 5, finalDisplay, {
-                                font: { sz: 10, bold: finalIsPass, color: { rgb: finalIsPass ? '166534' : '94A3B8' } },
-                                fill: { fgColor: { rgb: rowBg } },
-                                alignment: { horizontal: 'center', vertical: 'center' },
-                                border: isFinalPass || isFirstPass ? pBorderGreen : pBorder
-                            });
-
-                            passRow++;
-                            totalPassCount++;
+                            passSetCell(curRow, colStart + 0, idx + 1, csNo);
+                            passSetCell(curRow, colStart + 1, a.branch || '', cs);
+                            passSetCell(curRow, colStart + 2, a.name || '', csName);
+                            passSetCell(curRow, colStart + 3, gender, cs);
+                            passSetCell(curRow, colStart + 4, fiVal, csPass(fiVal));
+                            passSetCell(curRow, colStart + 5, fVal, csPass(fVal));
+                            curRow++;
                         });
 
-                        passRow += 2; // 대학 간 여백
+                        curRow++; // 대학 간 빈줄
                     }
-                    passRow++; // 군 간 여백
-                }
+                });
 
-                // 타이틀 총 합격자 수 반영
+                // 타이틀 반영
                 passSetCell(0, 0, `${year}학년도 합격자 명단 (총 ${totalPassCount}명)`, {
                     font: { bold: true, sz: 16, color: { rgb: '14532D' } },
                     alignment: { vertical: 'center' }
                 });
 
                 passWs['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: passRef.r, c: passRef.c } });
-                passWs['!cols'] = [
-                    { wch: 6 },   // No.
-                    { wch: 12 },  // 지점
-                    { wch: 12 },  // 이름
-                    { wch: 6 },   // 성별
-                    { wch: 10 },  // 최초합
-                    { wch: 10 },  // 최종합
-                ];
+                passWs['!merges'] = passMerges;
+
+                // 컬럼 너비
+                const passColWidths = [];
+                for (let gi = 0; gi < gunList.length; gi++) {
+                    passColWidths.push({ wch: 5 });   // No.
+                    passColWidths.push({ wch: 10 });  // 지점
+                    passColWidths.push({ wch: 10 });  // 이름
+                    passColWidths.push({ wch: 5 });   // 성별
+                    passColWidths.push({ wch: 8 });   // 최초
+                    passColWidths.push({ wch: 8 });   // 최종
+                    if (gi < gunList.length - 1) passColWidths.push({ wch: 2 }); // 간격
+                }
+                passWs['!cols'] = passColWidths;
+
                 XLSX.utils.book_append_sheet(wb, passWs, passSheetName);
 
                 // ===== 목차에 합격자 명단 링크 추가 =====
