@@ -1316,8 +1316,10 @@
                     // 데이터 스타일 (4행~) — 합격 여부에 따라 행 색상 변경
                     for (let r = 4; r < 4 + rows.length; r++) {
                         const rowData = rows[r - 4];
-                        const isFinalPass = rowData['최종결과'] && rowData['최종결과'].includes('합격');
-                        const isFirstPass = !isFinalPass && rowData['최초결과'] && rowData['최초결과'].includes('합격');
+                        const finalVal = rowData['최종결과'] || '';
+                        const firstVal = rowData['최초결과'] || '';
+                        const isFinalPass = finalVal === '최종합' || finalVal === '합격';
+                        const isFirstPass = !isFinalPass && (firstVal === '최초합' || firstVal === '합격');
 
                         for (let c = 0; c < headers.length; c++) {
                             const addr = XLSX.utils.encode_cell({ r, c });
