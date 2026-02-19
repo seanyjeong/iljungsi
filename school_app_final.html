@@ -1123,7 +1123,10 @@
                         practicalCols.add(`기록${i}`);
                     }
 
-                    // 시트 데이터 구성: 1행 타이틀 + 2행 홈링크 + 3행 빈줄 + 4행 헤더 + 데이터
+                    // 이 대학에 1단계 결과가 있는지 확인
+                    const has1stResult = applicants.some(a => a.result_1st);
+
+                    // 시트 데이터 구성
                     const rows = applicants.map(a => {
                         const row = {
                             '순위': a._rank,
@@ -1146,13 +1149,15 @@
                             '수능점수': a.suneung_score ? Number(a.suneung_score.toFixed(2)) : '',
                             '내신점수': a.naeshin_score ? Number(a.naeshin_score.toFixed(2)) : '',
                             '실기점수': a.practical_score ? Number(a.practical_score.toFixed(2)) : '',
+                            '총점': a.total_score ? Number(a.total_score.toFixed(2)) : '',
                         };
+                        // 실기 종목/기록은 총점 뒤에
                         for (let i = 0; i < practicalCount; i++) {
                             row[`종목${i + 1}`] = a._practicals[i]?.종목 || '';
                             row[`기록${i + 1}`] = a._practicals[i]?.기록 || '';
                         }
-                        row['총점'] = a.total_score ? Number(a.total_score.toFixed(2)) : '';
-                        row['1단계결과'] = a.result_1st || '';
+                        // 1단계결과는 해당 대학에 있을 때만
+                        if (has1stResult) row['1단계결과'] = a.result_1st || '';
                         row['최초결과'] = a.result_first || '';
                         row['최종결과'] = a.result_final || '';
                         row['등록여부'] = (a.registered === 'Y' || a.registered === true) ? 'Y' : '';
